@@ -55,11 +55,12 @@ std_list_rand=np.zeros((len(codes_and_size),realizations,len(error_probabilities
 
 pL_list =np.zeros((len(codes_and_size),len(error_probabilities)))
 std_list=np.zeros((len(codes_and_size),len(error_probabilities)))
+timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
+dirname="./data/"+timestr+code_name
+os.mkdir(dirname)     
 
 for code_index,code in enumerate(codes_and_size):
-    timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
-    dirname="./data/"+timestr+code_name
-    os.mkdir(dirname)     
+
     rng = np.random.default_rng(59)
 
     error = error_model.generate(code, error_probability_max, rng)
