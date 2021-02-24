@@ -15,12 +15,12 @@ import os, time
 # set models
 sizes= range(5,10,2)
 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-bias=1000000
+bias=50
 error_model = BiasedDepolarizingErrorModel(bias,'Z')
 decoder = PlanarMPSDecoder_def(chi=10)
 # set physical error probabilities
 error_probability_min, error_probability_max = 0.3, 0.6
-error_probabilities = np.linspace(error_probability_min, error_probability_max, 15)
+error_probabilities = np.linspace(error_probability_min, error_probability_max, 30)
 
 # set max_runs for each probability
 max_runs = 400
