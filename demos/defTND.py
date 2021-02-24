@@ -13,17 +13,17 @@ import importlib as imp
 imp.reload(app_def)
 import os, time
 # set models
-sizes= range(5,10,2)
+sizes= range(6,15,4)
 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 bias=50
 error_model = BiasedDepolarizingErrorModel(bias,'Z')
-decoder = PlanarMPSDecoder_def(chi=10)
+decoder = PlanarMPSDecoder_def(chi=100)
 # set physical error probabilities
-error_probability_min, error_probability_max = 0.3, 0.6
+error_probability_min, error_probability_max = 0.05, 0.24
 error_probabilities = np.linspace(error_probability_min, error_probability_max, 30)
 
 # set max_runs for each probability
-max_runs = 400
+max_runs = 10000
 
 # print run parameters
 print('codes_and_size:', [code.label for code in codes_and_size])
@@ -40,12 +40,12 @@ def parallel_step_p(code,hadamard_mat,error_model, decoder, max_runs,error_proba
     return result
 
 
-#code_name="optimal"
-code_name="random"
+code_name="optimal"
+#code_name="random"
 #code_name="XZZX"
 
 if (code_name=="random"):
-    realizations=50
+    realizations=60
 else:
     realizations=1
 
@@ -56,10 +56,11 @@ std_list_rand=np.zeros((len(codes_and_size),realizations,len(error_probabilities
 pL_list =np.zeros((len(codes_and_size),len(error_probabilities)))
 std_list=np.zeros((len(codes_and_size),len(error_probabilities)))
 
+timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
+dirname="./data/"+timestr+code_name
+os.mkdir(dirname) 
+
 for code_index,code in enumerate(codes_and_size):
-    timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
-    dirname="./data/"+timestr+code_name
-    os.mkdir(dirname)     
     rng = np.random.default_rng(59)
 
     error = error_model.generate(code, error_probability_max, rng)
