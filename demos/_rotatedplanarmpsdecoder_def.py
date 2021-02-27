@@ -1,8 +1,8 @@
 import functools
+import itertools
 import json
 import logging
 import operator
-import qecsim
 
 import numpy as np
 from mpmath import mp
@@ -13,21 +13,16 @@ from qecsim.models.generic import DepolarizingErrorModel
 
 logger = logging.getLogger(__name__)
 
-@cli_description('MPS ([chi] INT >=0, [mode] CHAR, ...)')
-class PlanarMPSDecoder_def(Decoder):
-    r"""
-    Implements a planar Matrix Product State (MPS) decoder.
 
-    A version of this decoder yielded results reported in https://arxiv.org/abs/1708.08474
-    and https://arxiv.org/abs/1812.08186.
+@cli_description('MPS ([chi] INT >=0, [mode] CHAR, ...)')
+class RotatedPlanarMPSDecoder_def(Decoder):
+    r"""
+    Implements a rotated planar Matrix Product State (MPS) decoder.
 
     Decoding algorithm:
 
-    * A sample recovery operation :math:`f` is found by resolving the syndrome to plaquettes
-      (:meth:`qecsim.models.planar.PlanarCode.syndrome_to_plaquette_indices`), finding the nearest boundary of the same
-      type for each plaquette (:meth:`qecsim.models.planar.PlanarCode.virtual_plaquette_index`), constructing a recovery
-      operation by applying the path between each plaquette and its corresponding boundary
-      (:meth:`qecsim.models.planar.PlanarPauli.path`).
+    * A sample recovery operation :math:`f` is found by applying a path of X(Z) operators between each Z(X)-plaquette,
+      identified by the syndrome, and an X(Z)-boundary.
     * The probability of the left coset :math:`fG` of the stabilizer group :math:`G` of the planar code with respect
       to :math:`f` is found by contracting an appropriately defined MPS-based tensor network (see
       https://arxiv.org/abs/1405.4883).
@@ -48,59 +43,72 @@ class PlanarMPSDecoder_def(Decoder):
         * mode='r': contract by rows
         * mode='a': contract by columns and by rows and, for each coset, take the average of the probabilities.
 
-    * Contracting by columns (i.e. truncating vertical links) may give different coset probabilities to contracting by
-      rows (i.e. truncating horizontal links). However, the effect is symmetric in that transposing the sample_pauli on
-      the lattice and exchanging X and Z single Paulis reverses the difference between X and Z cosets probabilities.
-    * Specifying stp (skip truncate probability) gives the probability that a tensor is not truncated in the approximate
-      contraction controlled by chi. This can be used to break the symmetry of the contraction approximation.
-    * The code is optimised to evaluate cosets that differ only in the last column/row together. It is important,
-      therefore, that the logical X/Z operators of the PlanarPauli act on the last column/row respectively.
-
     Tensor network example:
 
-    3x4 planar code (H=qubit on horizontal edge, V=qubit on vertical edge):
+    3x3 rotated planar code with H or V indicating qubits and hashed/blank plaquettes indicating X/Z stabilizers:
     ::
 
-        H---H---H---H
-          |   |   |
-          V   V   V
-          |   |   |
-        H---H---H---H
-          |   |   |
-          V   V   V
-          |   |   |
-        H---H---H---H
+           /---\
+           |   |
+           H---V---H--\
+           |###|   |##|
+           |###|   |##|
+           |###|   |##|
+        /--V---H---V--/
+        |##|   |###|
+        |##|   |###|
+        |##|   |###|
+        \--H---V---H
+               |   |
+               \---/
+
 
     MPS tensor network as per https://arxiv.org/abs/1405.4883 (s=stabilizer):
     ::
 
-         0 1 2 3 4 5 6
-        0H-s-H-s-H-s-H
-         | | | | | | |
-        1s-V-s-V-s-V-s
-         | | | | | | |
-        2H-s-H-s-H-s-H
-         | | | | | | |
-        3s-V-s-V-s-V-s
-         | | | | | | |
-        4H-s-H-s-H-s-H
+             s
+            / \
+           H   V   H
+            \ / \ / \
+             s   s   s
+            / \ / \ /
+           V   H   V
+          / \ / \ /
+         s   s   s
+          \ / \ / \
+           H   V   H
+                \ /
+                 s
+
+    MPS tensor network is contracted diagonally in SE(SW) direction in mode c(r). Equivalently the tensor network is
+    rotated 45 degrees anticlockwise for contraction by column(row):
+    ::
+
+          0 1 2 3 4
+
+        0     H-s
+              | |
+        1 s-V-s-V
+          | | | |
+        2 H-s-H-s-H
+            | | | |
+        3   V-s-V-s
+            | |
+        4   s-H
     """
 
-    def __init__(self, chi=None, mode='c', stp=None, tol=None):
+    def __init__(self, chi=None, mode='c', tol=None):
         """
-        Initialise new planar MPS decoder.
+        Initialise new rotated planar MPS decoder.
 
         :param chi: Truncated bond dimension. (default=None, unrestricted=falsy)
         :type chi: int or None
         :param mode: Contraction mode. (default='c', 'c'=columns, 'r'=rows, 'a'=average)
         :type mode: str
-        :param stp: Skip truncate probability. (default=None, disabled=falsy)
-        :type stp: float or None
         :param tol: Tolerance for treating normalised singular values as zero. (default=None, unrestricted=falsy)
         :type tol: float or None
         :raises ValueError: if chi is not falsy or > 0.
         :raises ValueError: if mode not in ('c', 'r', 'a').
-        :raises ValueError: if stp is not falsy or 1.0 >= stp > 0.0.
         :raises ValueError: if tol is not falsy or > 0.0.
         :raises TypeError: if any parameter is of an invalid type.
         """
@@ -109,45 +117,53 @@ class PlanarMPSDecoder_def(Decoder):
                 raise ValueError('{} valid chi values are falsy or integer > 0'.format(type(self).__name__))
             if mode not in ('c', 'r', 'a'):
                 raise ValueError("{} valid mode values are ('c', 'r', 'a')".format(type(self).__name__))
-            if not (not stp or 1.0 >= stp > 0.0):
-                raise ValueError('{} valid stp values are falsy or 1.0 >= number > 0.0'.format(type(self).__name__))
             if not (not tol or tol > 0.0):
                 raise ValueError('{} valid tol values are falsy or number > 0.0'.format(type(self).__name__))
         except TypeError as ex:
             raise TypeError('{} invalid parameter type'.format(type(self).__name__)) from ex
         self._chi = chi
         self._mode = mode
-        self._stp = stp
         self._tol = tol
         self._tnc = self.TNC()
 
     @classmethod
     def sample_recovery(cls, code, syndrome):
         """
-        Return a sample Pauli consistent with the syndrome, created by applying a path between each plaquette identified
-        by the syndrome and the nearest boundary of the same type as the plaquette.
+        Return a sample Pauli consistent with the syndrome, created by applying a path of X(Z) operators between each
+        Z(X)-plaquette, identified by the syndrome, and an X(Z)-boundary.
 
-        :param code: Planar code.
-        :type code: PlanarCode
+        :param code: Rotated planar code.
+        :type code: RotatedPlanarCode
         :param syndrome: Syndrome as binary vector.
         :type syndrome: numpy.array (1d)
-        :return: Sample recovery operation as planar pauli.
-        :rtype: PlanarPauli
+        :return: Sample recovery operation as rotated planar pauli.
+        :rtype: RotatedPlanarPauli
         """
         # prepare sample
         sample_recovery = code.new_pauli()
         # ask code for syndrome plaquette_indices
         plaquette_indices = code.syndrome_to_plaquette_indices(syndrome)
         # for each plaquette
-        for index in plaquette_indices:
-            # find nearest off-boundary plaquette
-            virtual_index = code.virtual_plaquette_index(index)
-            # add path to boundary
-            sample_recovery.path(index, virtual_index)
+        max_site_x, max_site_y = code.site_bounds
+        for plaq_index in plaquette_indices:
+            # NOTE: plaquette index coincides with site on lower left corner
+            plaq_x, plaq_y = plaq_index
+            if code.is_z_plaquette(plaq_index):
+                # add X path to X-boundary (left or right)
+                site_y = max(0, plaq_y)  # ensure sites are within lattice bounds
+                site_x_range = range(0, plaq_x + 1)  # to left boundary
+                # site_x_range = range(plaq_x + 1, max_site_x + 1)  # to right boundary
+                sample_recovery.site('X', *((site_x, site_y) for site_x in site_x_range))
+            else:
+                # add Z path to Z-boundary (bottom or top)
+                site_x = max(0, plaq_x)  # ensure sites are within lattice bounds
+                site_y_range = range(0, plaq_y + 1)  # to bottom boundary
+                # site_y_range = range(plaq_y + 1, max_site_y + 1)  # to top boundary
+                sample_recovery.site('Z', *((site_x, site_y) for site_y in site_y_range))
         # return sample
         return sample_recovery
 
-    def _coset_probabilities(self, prob_dist, sample_pauli, hadamard_mat):
+    def _coset_probabilities(self, prob_dist, hadamard_mat, sample_pauli):
         r"""
         Return the (approximate) probability and sample Pauli for the left coset :math:`fG` of the stabilizer group
         :math:`G` of the planar code with respect to the given sample Pauli :math:`f`, as well as for the cosets
@@ -164,16 +180,15 @@ class PlanarMPSDecoder_def(Decoder):
         # NOTE: all list/tuples in this method are ordered (i, x, y, z)
         # empty log warnings
         log_warnings = []
-        # sample_paulis
-        sample_paulis = [
+        # sample paulis
+        sample_paulis = (
             sample_pauli,
             sample_pauli.copy().logical_x(),
             sample_pauli.copy().logical_x().logical_z(),
             sample_pauli.copy().logical_z()
-        ]
-        # tensor networks
-        tns = [self._tnc.create_tn(prob_dist, pauli,hadamard_mat) for pauli in sample_paulis]
-        mask = self._tnc.create_mask(self._stp, tns[0].shape)  # same mask for all tns
+        )
+        # tensor networks: tns are common to both contraction by column and by row (after transposition)
+        tns = [self._tnc.create_tn(prob_dist, hadamard_mat, sp) for sp in sample_paulis]
         # probabilities
         coset_ps = (0.0, 0.0, 0.0, 0.0)  # default coset probabilities
         coset_ps_col = coset_ps_row = None  # undefined coset probabilities by column and row
@@ -181,19 +196,11 @@ class PlanarMPSDecoder_def(Decoder):
         if self._mode in ('c', 'a'):
             # evaluate coset probabilities by column
             coset_ps_col = [0.0, 0.0, 0.0, 0.0]  # default coset probabilities
-            # note: I,X and Z,Y cosets differ only in the last column (logical X)
-            try:
-                bra_i, mult = tt.mps2d.contract(tns[0], chi=self._chi, tol=self._tol, stop=-1, mask=mask)  # tns.i
-                coset_ps_col[0] = tt.mps.inner_product(bra_i, tns[0][:, -1]) * mult  # coset_ps_col.i
-                coset_ps_col[1] = tt.mps.inner_product(bra_i, tns[1][:, -1]) * mult  # coset_ps_col.x
-            except (ValueError, np.linalg.LinAlgError) as ex:
-                log_warnings.append('CONTRACTION BY COL FOR I COSET FAILED: {!r}'.format(ex))
-            try:
-                bra_z, mult = tt.mps2d.contract(tns[3], chi=self._chi, tol=self._tol, stop=-1, mask=mask)  # tns.z
-                coset_ps_col[2] = tt.mps.inner_product(bra_z, tns[2][:, -1]) * mult  # coset_ps_col.y
-                coset_ps_col[3] = tt.mps.inner_product(bra_z, tns[3][:, -1]) * mult  # coset_ps_col.z
-            except (ValueError, np.linalg.LinAlgError) as ex:
-                log_warnings.append('CONTRACTION BY COL FOR Z COSET FAILED: {!r}'.format(ex))
+            for i in range(len(tns)):
+                try:
+                    coset_ps_col[i] = tt.mps2d.contract(tns[i], chi=self._chi, tol=self._tol)
+                except (ValueError, np.linalg.LinAlgError) as ex:
+                    log_warnings.append('CONTRACTION BY COL FOR {} COSET FAILED: {!r}'.format('IXYZ'[i], ex))
             # treat nan as inf so it doesn't get lost
             coset_ps_col = [mp.inf if mp.isnan(coset_p) else coset_p for coset_p in coset_ps_col]
         if self._mode in ('r', 'a'):
@@ -201,20 +208,11 @@ class PlanarMPSDecoder_def(Decoder):
             coset_ps_row = [0.0, 0.0, 0.0, 0.0]  # default coset probabilities
             # transpose tensor networks
             tns = [tt.mps2d.transpose(tn) for tn in tns]
-            mask = None if mask is None else mask.transpose()
-            # note: I,Z and X,Y cosets differ only in the last row (logical Z)
-            try:
-                bra_i, mult = tt.mps2d.contract(tns[0], chi=self._chi, tol=self._tol, stop=-1, mask=mask)  # tns.i
-                coset_ps_row[0] = tt.mps.inner_product(bra_i, tns[0][:, -1]) * mult  # coset_ps_row.i
-                coset_ps_row[3] = tt.mps.inner_product(bra_i, tns[3][:, -1]) * mult  # coset_ps_row.z
-            except (ValueError, np.linalg.LinAlgError) as ex:
-                log_warnings.append('CONTRACTION BY ROW FOR I COSET FAILED: {!r}'.format(ex))
-            try:
-                bra_x, mult = tt.mps2d.contract(tns[1], chi=self._chi, tol=self._tol, stop=-1, mask=mask)  # tns.x
-                coset_ps_row[1] = tt.mps.inner_product(bra_x, tns[1][:, -1]) * mult  # coset_ps_row.x
-                coset_ps_row[2] = tt.mps.inner_product(bra_x, tns[2][:, -1]) * mult  # coset_ps_row.y
-            except (ValueError, np.linalg.LinAlgError) as ex:
-                log_warnings.append('CONTRACTION BY ROW FOR X COSET FAILED: {!r}'.format(ex))
+            for i in range(len(tns)):
+                try:
+                    coset_ps_row[i] = tt.mps2d.contract(tns[i], chi=self._chi, tol=self._tol)
+                except (ValueError, np.linalg.LinAlgError) as ex:
+                    log_warnings.append('CONTRACTION BY ROW FOR {} COSET FAILED: {!r}'.format('IXYZ'[i], ex))
             # treat nan as inf so it doesn't get lost
             coset_ps_row = [mp.inf if mp.isnan(coset_p) else coset_p for coset_p in coset_ps_row]
         if self._mode == 'c':
@@ -224,7 +222,6 @@ class PlanarMPSDecoder_def(Decoder):
         elif self._mode == 'a':
             # average coset probabilities
             coset_ps = [sum(coset_p) / len(coset_p) for coset_p in zip(coset_ps_col, coset_ps_row)]
-
         # logging
         if log_warnings:
             log_data = {
@@ -240,7 +237,7 @@ class PlanarMPSDecoder_def(Decoder):
             }
             logger.warning('{}: {}'.format(' | '.join(log_warnings), json.dumps(log_data, sort_keys=True)))
         # results
-        return tuple(coset_ps), tuple(sample_paulis)
+        return tuple(coset_ps), sample_paulis
 
     def decode(self, code, hadamard_mat, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
@@ -252,8 +249,8 @@ class PlanarMPSDecoder_def(Decoder):
         probability distribution for use in the decoding algorithm. Any provided error model must implement
         :meth:`~qecsim.model.ErrorModel.probability_distribution`.
 
-        :param code: Planar code.
-        :type code: PlanarCode
+        :param code: Rotated planar code.
+        :type code: RotatedPlanarCode
         :param syndrome: Syndrome as binary vector.
         :type syndrome: numpy.array (1d)
         :param error_model: Error model. (default=DepolarizingErrorModel())
@@ -265,13 +262,10 @@ class PlanarMPSDecoder_def(Decoder):
         """
         # any recovery
         any_recovery = self.sample_recovery(code, syndrome)
-
-        # probability distribution  
+        # probability distribution
         prob_dist = error_model.probability_distribution(error_probability)
-
         # coset probabilities, recovery operations
-        coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,hadamard_mat)
-        
+        coset_ps, recoveries = self._coset_probabilities(prob_dist, hadamard_mat, any_recovery)
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
         # logging
@@ -297,34 +291,14 @@ class PlanarMPSDecoder_def(Decoder):
     @property
     def label(self):
         """See :meth:`qecsim.model.Decoder.label`"""
-        params = [('chi', self._chi), ('mode', self._mode), ('stp', self._stp), ('tol', self._tol), ]
-        return 'Planar MPS_def ({})'.format(', '.join('{}={}'.format(k, v) for k, v in params if v))
+        params = [('chi', self._chi), ('mode', self._mode), ('tol', self._tol), ]
+        return 'Rotated planar MPS ({})'.format(', '.join('{}={}'.format(k, v) for k, v in params if v))
 
     def __repr__(self):
-        return '{}({!r}, {!r}, {!r}, {!r})'.format(
-            type(self).__name__, self._chi, self._mode, self._stp, self._tol,
-        )
+        return '{}({!r}, {!r}, {!r})'.format(type(self).__name__, self._chi, self._mode, self._tol)
 
     class TNC:
         """Tensor network creator"""
-
-        def node_shape(self, compass_direction=None):
-            """Return shape of tensor including dummy indices."""
-            return {
-                'n': (1, 2, 2, 2),
-                'ne': (1, 1, 2, 2),
-                'e': (2, 1, 2, 2),
-                'se': (2, 1, 1, 2),
-                's': (2, 2, 1, 2),
-                'sw': (2, 2, 1, 1),
-                'w': (2, 2, 2, 1),
-                'nw': (1, 2, 2, 1),
-            }.get(compass_direction, (2, 2, 2, 2))
-
-        @functools.lru_cache()
-        def create_s_node(self, compass_direction=None):
-            """Return stabilizer tensor."""
-            return tt.tsr.delta(self.node_shape(compass_direction))
 
         @functools.lru_cache()
         def h_node_value(self, prob_dist, f, n, e, s, w):
@@ -345,55 +319,125 @@ class PlanarMPSDecoder_def(Decoder):
 
         @functools.lru_cache()
         def create_h_node(self, prob_dist, f, compass_direction=None):
-            """Return horizontal edge tensor."""
-            node = np.empty(self.node_shape(compass_direction), dtype=np.float64)
+            """Return horizontal qubit tensor, i.e. has X plaquettes to left/right and Z plaquettes above/below."""
+
+            def _shape(compass_direction=None):
+                """Return shape of tensor including dummy indices."""
+                return {  # (ne, se, sw, nw)
+                    'n': (2, 2, 2, 1),
+                    'ne': (1, 2, 2, 1),
+                    'e': (1, 2, 2, 2),
+                    'se': (1, 1, 2, 2),
+                    's': (2, 1, 2, 2),
+                    'sw': (2, 1, 1, 2),
+                    'w': (2, 2, 1, 2),
+                    'nw': (2, 2, 1, 1),
+                }.get(compass_direction, (2, 2, 2, 2))
+
+            # create bare h_node
+            node = np.empty(_shape(compass_direction), dtype=np.float64)
+            # fill values
             for n, e, s, w in np.ndindex(node.shape):
                 node[(n, e, s, w)] = self.h_node_value(prob_dist, f, n, e, s, w)
             return node
 
         @functools.lru_cache()
         def create_v_node(self, prob_dist, f, compass_direction=None):
-            """Return vertical edge tensor."""
-            node = np.empty(self.node_shape(compass_direction), dtype=np.float64)
+            """Return vertical qubit tensor, i.e. has Z plaquettes to left/right and X plaquettes above/below."""
+
+            def _shape(compass_direction=None):
+                """Return shape of tensor including dummy indices."""
+                return {  # (ne, se, sw, nw)
+                    'n': (1, 2, 2, 2),
+                    'ne': (1, 1, 2, 2),
+                    'e': (2, 1, 2, 2),
+                    'se': (2, 1, 1, 2),
+                    's': (2, 2, 1, 2),
+                    # 'sw': (2, 2, 1, 1),  # cannot happen
+                    'w': (2, 2, 2, 1),
+                    'nw': (1, 2, 2, 1),
+                }.get(compass_direction, (2, 2, 2, 2))
+
+            # create bare v_node
+            node = np.empty(_shape(compass_direction), dtype=np.float64)
+            # fill values
             for n, e, s, w in np.ndindex(node.shape):
                 node[(n, e, s, w)] = self.v_node_value(prob_dist, f, n, e, s, w)
             return node
 
-        #just provide different hadamard matrices for different codes 
-        def create_tn(self, prob_dist, sample_pauli,hadamard_mat):
-            """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
-            Note: The network contracts to the coset probability of the given sample_pauli."""
-            # initialise empty tn
-            tn = np.empty((2 * sample_pauli.code.size[0] - 1, 2 * sample_pauli.code.size[1] - 1), dtype=object)
-            # index to direction maps
-            row_to_direction = {0: 'n', tn.shape[0] - 1: 's'}
-            col_to_direction = {0: 'w', tn.shape[1] - 1: 'e'}
+        @functools.lru_cache()
+        def create_s_node(self, compass_direction=None):
+            """Return stabilizer tensor."""
 
+            def _shape(compass_direction=None):
+                """Return shape of tensor including dummy indices."""
+                return {  # (ne, se, sw, nw)
+                    'n': (1, 2, 2, 1),
+                    'e': (1, 1, 2, 2),
+                    's': (2, 1, 1, 2),
+                    'w': (2, 2, 1, 1),
+                }.get(compass_direction, (2, 2, 2, 2))
+
+            node = tt.tsr.delta(_shape(compass_direction))
+            return node
+
+        def create_tn(self, prob_dist, hadamard_mat, sample_pauli):
+            """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
+            Note: The network contracts to the coset probability of the given sample_pauli.
+            """
+            def _rotate_q_index(index, code):
+                """Convert code site index in format (x, y) to tensor network q-node index in format (r, c)"""
+                site_x, site_y = index  # qubit index in (x, y)
+                site_r, site_c = code.site_bounds[1] - site_y, site_x  # qubit index in (r, c)
+                return code.site_bounds[0] - site_c + site_r, site_r + site_c  # q-node index in (r, c)
+
+            def _rotate_p_index(index, code):
+                """Convert code plaquette index in format (x, y) to tensor network s-node index in format (r, c)"""
+                q_node_r, q_node_c = _rotate_q_index(index, code)  # q-node index in (r, c)
+                return q_node_r - 1, q_node_c  # s-node index in (r, c)
+
+            def _compass_q_direction(index, code):
+                """if the code site index lies on border of lattice then give that direction, else empty string."""
+                direction = {code.site_bounds[1]: 'n', 0: 's'}.get(index[1], '')
+                direction += {0: 'w', code.site_bounds[0]: 'e'}.get(index[0], '')
+                return direction
+
+            def _compass_p_direction(index, code):
+                """if the code plaquette index lies on border of lattice then give that direction, else empty string."""
+                direction = {code.site_bounds[1]: 'n', -1: 's'}.get(index[1], '')
+                direction += {-1: 'w', code.site_bounds[0]: 'e'}.get(index[0], '')
+                return direction
+
+            
             pi,px,py,pz=prob_dist
             had_prob_dist= pi,pz,py,px
 
-            # add nodes to tn
-            for row, col in np.ndindex(tn.shape):
-                # find direction
-                direction = row_to_direction.get(row, '')
-                direction += col_to_direction.get(col, '')
-                # add node
-                if 0 == row % 2 == col % 2:
-                    if(hadamard_mat[row,col]==0):
-                        tn[row, col] = self.create_h_node(prob_dist, sample_pauli.operator((row, col)), direction)
+            # extract code
+            code = sample_pauli.code
+            # initialise empty tn
+            tn_max_r, _ = _rotate_q_index((0, 0), code)
+            _, tn_max_c = _rotate_q_index((code.site_bounds[0], 0), code)
+            tn = np.empty((tn_max_r + 1, tn_max_c + 1), dtype=object)
+            # iterate over
+            max_site_x, max_site_y = code.site_bounds
+            for code_index in itertools.product(range(-1, max_site_x + 1), range(-1, max_site_y + 1)):
+                is_z_plaquette = code.is_z_plaquette(code_index)
+                if code.is_in_site_bounds(code_index):
+                    q_node_index = _rotate_q_index(code_index, code)
+                    q_pauli = sample_pauli.operator(code_index)
+                    if is_z_plaquette:
+                        if hadamard_mat[code_index]:
+                            q_node = self.create_h_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        else:
+                            q_node = self.create_h_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
                     else:
-                        tn[row, col] = self.create_h_node(had_prob_dist, sample_pauli.operator((row, col)), direction)
-                elif 1 == row % 2 == col % 2:
-                    if(hadamard_mat[row,col]==0):
-                        tn[row, col] = self.create_v_node(prob_dist, sample_pauli.operator((row, col)), direction)
-                    else:
-                        tn[row, col] = self.create_v_node(had_prob_dist, sample_pauli.operator((row, col)), direction)
-                else:
-                    tn[row, col] = self.create_s_node(direction)
+                        if hadamard_mat[code_index]:
+                            q_node = self.create_v_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        else:
+                            q_node = self.create_v_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                    tn[q_node_index] = q_node
+                if code.is_in_plaquette_bounds(code_index):
+                    s_node_index = _rotate_p_index(code_index, code)
+                    s_node = self.create_s_node(_compass_p_direction(code_index, code))
+                    tn[s_node_index] = s_node
             return tn
-
-        def create_mask(self, stp, shape):
-            """Return truncate mask (numpy.array 2d) of elements True with probability 1-stp and False with probability
-            stp. Note: None is returned if stp (skip truncate probability) is falsy."""
-            rng = np.random.default_rng()
-            return rng.choice((True, False), size=shape, p=(1 - stp, stp)) if stp else None

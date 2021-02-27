@@ -7,7 +7,10 @@ import qecsim
 from qecsim import app
 from qecsim.models.generic import PhaseFlipErrorModel,DepolarizingErrorModel,BiasedDepolarizingErrorModel
 from qecsim.models.planar import PlanarCode, PlanarMPSDecoder
+from qecsim.models.rotatedplanar import RotatedPlanarCode, RotatedPlanarMPSDecoder
+
 from _planarmpsdecoder_def import PlanarMPSDecoder_def
+from _rotatedplanarmpsdecoder_def import RotatedPlanarMPSDecoder_def
 import app_def
 import importlib as imp
 imp.reload(app_def)
@@ -21,13 +24,13 @@ def parallel_step_p(code,hadamard_mat,error_model, decoder, max_runs,error_proba
 
 # set models
 sizes= range(5,10,4)
-codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-bias_list=[30,1000]
+codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
+bias_list=[30,100000]
 
 code_name="optimal"
-code_name="XZZX"
 code_name="random"
 code_name="CSS"
+code_name="XZZX"
 
 if (code_name=="random"):
     realizations=50
@@ -37,6 +40,8 @@ else:
 # set physical error probabilities
 error_probability_min, error_probability_max = 0.05, 0.24
 error_probabilities = np.linspace(error_probability_min, error_probability_max, 10)
+# set max_runs for each probability
+max_runs = 2000
 
 timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
 dirname="./data/"+timestr+code_name
@@ -45,10 +50,7 @@ os.mkdir(dirname)
 for bias in bias_list:
     error_model = BiasedDepolarizingErrorModel(bias,'Z')
     chi_val=10
-    decoder = PlanarMPSDecoder_def(chi=chi_val)
-
-    # set max_runs for each probability
-    max_runs = 500
+    decoder = RotatedPlanarMPSDecoder_def(chi=chi_val)
 
     # print run parameters
     print('codes_and_size:', [code.label for code in codes_and_size])
@@ -62,15 +64,18 @@ for bias in bias_list:
 
     pL_list =np.zeros((len(codes_and_size),len(error_probabilities)))
     std_list=np.zeros((len(codes_and_size),len(error_probabilities)))
+    
+    def _rotate_q_index(index, code):
+        """Convert code site index in format (x, y) to tensor network q-node index in format (r, c)"""
+        site_x, site_y = index  # qubit index in (x, y)
+        site_r, site_c = code.site_bounds[1] - site_y, site_x  # qubit index in (r, c)
+        return code.site_bounds[0] - site_c + site_r, site_r + site_c  # q-node index in (r, c)
 
     for code_index,code in enumerate(codes_and_size):
-        rng = np.random.default_rng(59)
+        tn_max_r, _ = _rotate_q_index((0, 0), code)
+        _, tn_max_c = _rotate_q_index((code.site_bounds[0], 0), code)
 
-        error = error_model.generate(code, error_probability_max, rng)
-        syndrome = pt.bsp(error, code.stabilizers.T)
-        sample_pauli = decoder.sample_recovery(code, syndrome)
-        hadamard_mat_sample=np.zeros((2*sample_pauli.code.size[0] - 1, 2*sample_pauli.code.size[1] - 1))
-        hadamard_mat=np.zeros(hadamard_mat_sample.shape)
+        hadamard_mat=np.zeros((tn_max_r,tn_max_c))
 
         if code_name=="random":
             pH=0.5  
