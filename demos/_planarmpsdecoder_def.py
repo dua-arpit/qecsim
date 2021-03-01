@@ -271,6 +271,7 @@ class PlanarMPSDecoder_def(Decoder):
 
         # coset probabilities, recovery operations
         coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,hadamard_mat)
+        
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
         # logging
