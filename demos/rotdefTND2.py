@@ -6,16 +6,16 @@ import matplotlib.pyplot as plt
 import qecsim
 from qecsim import app
 from qecsim.models.generic import PhaseFlipErrorModel,DepolarizingErrorModel,BiasedDepolarizingErrorModel
-from qecsim.models.planar import PlanarCode, PlanarMPSDecoder
-from qecsim.models.rotatedplanar import RotatedPlanarCode, RotatedPlanarMPSDecoder
-import _rotatedplanarmpsdecoder_def
+#from qecsim.models.planar import PlanarCode, PlanarMPSDecoder
+#from qecsim.models.rotatedplanar import RotatedPlanarCode, RotatedPlanarMPSDecoder
+
 from _planarmpsdecoder_def import PlanarMPSDecoder_def
 from _rotatedplanarmpsdecoder_def import RotatedPlanarMPSDecoder_def
 import app_def
+import _rotatedplanarmpsdecoder_def
 import importlib as imp
 imp.reload(app_def)
 imp.reload(_rotatedplanarmpsdecoder_def)
-
 import os, time
 import multiprocessing as mp
 from functools import partial
@@ -25,14 +25,14 @@ def parallel_step_p(code,hadamard_vec,hadamard_mat,error_model, decoder, max_run
     return result
 
 # set models
-sizes= range(9,14,4) #choose odd sizes since we have defined hadamard_vec for odd sizes
+sizes= range(9,18,8) #choose odd sizes since we have defined hadamard_vec for odd sizes
 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
-bias_list=[40,10000]
+bias_list=[30,1000]
 
 code_name="optimal"
 code_name="CSS"
-code_name="XZZX"
 code_name="random"
+code_name="XZZX"
 
 if (code_name=="random"):
     realizations=50
@@ -43,7 +43,7 @@ else:
 error_probability_min, error_probability_max = 0.05, 0.5
 error_probabilities = np.linspace(error_probability_min, error_probability_max, 18)
 # set max_runs for each probability
-max_runs = 1000
+max_runs = 3000
 
 timestr = time.strftime("%Y%m%d-%H%M%S ")   #record current date and time
 dirname="./data/"+timestr+code_name
@@ -51,7 +51,7 @@ os.mkdir(dirname)
 
 for bias in bias_list:
     error_model = BiasedDepolarizingErrorModel(bias,'Z')
-    chi_val=15
+    chi_val=16
     decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
 
     # print run parameters

@@ -94,7 +94,18 @@ class BiasedDepolarizingErrorModel(SimpleErrorModel):
 
     def __repr__(self):
         return '{}({!r}, {!r})'.format(type(self).__name__, self._bias, self._axis)
+  
 
+
+
+
+
+
+
+
+
+
+  
 
 @cli_description('Biased Y v. X (bias FLOAT >= 0)')
 class BiasedYXErrorModel(SimpleErrorModel):

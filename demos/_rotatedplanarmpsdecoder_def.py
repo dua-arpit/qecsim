@@ -163,7 +163,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # return sample
         return sample_recovery
 
-    def _coset_probabilities(self, prob_dist, hadamard_mat, sample_pauli):
+    def _coset_probabilities(self, prob_dist, hadamard_vec,hadamard_mat, sample_pauli):
         r"""
         Return the (approximate) probability and sample Pauli for the left coset :math:`fG` of the stabilizer group
         :math:`G` of the planar code with respect to the given sample Pauli :math:`f`, as well as for the cosets
@@ -188,7 +188,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
             sample_pauli.copy().logical_z()
         )
         # tensor networks: tns are common to both contraction by column and by row (after transposition)
-        tns = [self._tnc.create_tn(prob_dist, hadamard_mat, sp) for sp in sample_paulis]
+        tns = [self._tnc.create_tn(prob_dist, hadamard_vec,hadamard_mat, sp) for sp in sample_paulis]
         # probabilities
         coset_ps = (0.0, 0.0, 0.0, 0.0)  # default coset probabilities
         coset_ps_col = coset_ps_row = None  # undefined coset probabilities by column and row
@@ -239,7 +239,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # results
         return tuple(coset_ps), sample_paulis
 
-    def decode(self, code, hadamard_mat, syndrome,
+    def decode(self, code, hadamard_vec,hadamard_mat, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
                error_probability=0.1, **kwargs):
         """
@@ -265,7 +265,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # probability distribution
         prob_dist = error_model.probability_distribution(error_probability)
         # coset probabilities, recovery operations
-        coset_ps, recoveries = self._coset_probabilities(prob_dist, hadamard_mat, any_recovery)
+        coset_ps, recoveries = self._coset_probabilities(prob_dist, hadamard_vec,hadamard_mat, any_recovery)
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
         # logging
@@ -381,7 +381,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
             node = tt.tsr.delta(_shape(compass_direction))
             return node
 
-        def create_tn(self, prob_dist, hadamard_mat, sample_pauli):
+        def create_tn(self, prob_dist, hadamard_vec,hadamard_mat, sample_pauli):
             """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
             Note: The network contracts to the coset probability of the given sample_pauli.
             """

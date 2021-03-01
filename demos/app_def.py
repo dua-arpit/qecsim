@@ -14,16 +14,16 @@ from qecsim.model import DecodeResult
 
 logger = logging.getLogger(__name__)
 
-def run_once_def(code, hadamard_mat,error_model, decoder, error_probability, rng=None):
+def run_once_def(code, hadamard_vec,hadamard_mat,error_model, decoder, error_probability, rng=None):
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0, 1].')
     # defaults
     rng = np.random.default_rng() if rng is None else rng
 
-    return _run_once_def('ideal', code, hadamard_mat, 1, error_model, decoder, error_probability, 0.0, rng)
+    return _run_once_def('ideal', code, hadamard_vec, hadamard_mat, 1, error_model, decoder, error_probability, 0.0, rng)
 
-def _run_once_def(mode, code, hadamard_mat, time_steps, error_model, decoder, error_probability, measurement_error_probability, rng):
+def _run_once_def(mode, code, hadamard_vec, hadamard_mat, time_steps, error_model, decoder, error_probability, measurement_error_probability, rng):
     """Implements run_once and run_once_ftp functions"""
     # assumptions
     assert (mode == 'ideal' and time_steps == 1) or mode == 'ftp'
@@ -33,6 +33,15 @@ def _run_once_def(mode, code, hadamard_mat, time_steps, error_model, decoder, er
     for _ in range(time_steps):
         # step_error: random error based on error probability
         step_error = error_model.generate(code, error_probability, rng)
+
+        n_qubits =code.n_k_d[0]
+
+        for i in range(n_qubits):
+            if hadamard_vec[i]==1:
+                step_error_temp=step_error[i]
+                step_error[i]=step_error[n_qubits+i]
+                step_error[n_qubits+i]=step_error_temp
+
         step_errors.append(step_error)
         # step_syndrome: stabilizers that do not commute with the error
         step_syndrome = pt.bsp(step_error, code.stabilizers.T)
@@ -72,7 +81,7 @@ def _run_once_def(mode, code, hadamard_mat, time_steps, error_model, decoder, er
            'step_measurement_errors': step_measurement_errors}
     # convert syndrome to 1d if mode is 'ideal'
     if mode == 'ideal':  # convert syndrome to 1d and call decode
-        decoding = decoder.decode(code,hadamard_mat, syndrome[0], **ctx)
+        decoding = decoder.decode(code, hadamard_vec, hadamard_mat, syndrome[0], **ctx)
     if mode == 'ftp':  # call decode_ftp
         decoding = decoder.decode_ftp(code, time_steps, syndrome, **ctx)
 
@@ -126,7 +135,7 @@ def _run_once_def(mode, code, hadamard_mat, time_steps, error_model, decoder, er
     return data
 
 
-def _run_def(mode, code, hadamard_mat, time_steps, error_model, decoder, error_probability, measurement_error_probability,
+def _run_def(mode, code, hadamard_vec, hadamard_mat, time_steps, error_model, decoder, error_probability, measurement_error_probability,
          max_runs=None, max_failures=None, random_seed=None):
     """Implements run and run_ftp functions"""
 
@@ -179,7 +188,7 @@ def _run_def(mode, code, hadamard_mat, time_steps, error_model, decoder, error_p
     while ((max_runs is None or runs_data['n_run'] < max_runs)
            and (max_failures is None or runs_data['n_fail'] < max_failures)):
         # run simulation
-        data = _run_once_def(mode, code, hadamard_mat, time_steps, error_model, decoder, error_probability,
+        data = _run_once_def(mode, code, hadamard_vec, hadamard_mat, time_steps, error_model, decoder, error_probability,
                          measurement_error_probability, rng)
         # increment run counts
         success_list[runs_data['n_run']]=data['success']
@@ -229,7 +238,7 @@ def _run_def(mode, code, hadamard_mat, time_steps, error_model, decoder, error_p
     return [runs_data['logical_failure_rate'],runs_data['logical_failure_rate_errorbar']]
 
 
-def run_def(code, hadamard_mat, error_model, decoder, error_probability, max_runs=None, max_failures=None, random_seed=None):
+def run_def(code, hadamard_vec, hadamard_mat, error_model, decoder, error_probability, max_runs=None, max_failures=None, random_seed=None):
     """
     Execute stabilizer code error-decode-recovery (ideal) simulation many times and return aggregated runs data.
 
@@ -289,7 +298,7 @@ def run_def(code, hadamard_mat, error_model, decoder, error_probability, max_run
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0, 1].')
-    return _run_def('ideal', code, hadamard_mat, 1, error_model, decoder, error_probability, 0.0, max_runs, max_failures, random_seed)
+    return _run_def('ideal', code, hadamard_vec, hadamard_mat, 1, error_model, decoder, error_probability, 0.0, max_runs, max_failures, random_seed)
 
 
 def _add_rate_statistics(runs_data):
