@@ -97,16 +97,6 @@ class BiasedDepolarizingErrorModel(SimpleErrorModel):
   
 
 
-
-
-
-
-
-
-
-
-  
-
 @cli_description('Biased Y v. X (bias FLOAT >= 0)')
 class BiasedYXErrorModel(SimpleErrorModel):
     """

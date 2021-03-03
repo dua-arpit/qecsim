@@ -18,26 +18,57 @@ from qecsim import paulitools as pt
 
 logger = logging.getLogger(__name__)
 
-def run_once_def(code,hadamard_mat,hadamard_vec,error_model, decoder, error_probability, rng=None):
+def run_once_defN(code, hadamard_mat,error_model, decoder, n_errors_code, rng=None):
     # validate parameters
-    if not (0 <= error_probability <= 1):
+
+    n_qubits = code.n_k_d[0]
+
+    if not (0 <= n_errors_code/n_qubits <= 1):
         raise ValueError('Error probability must be in [0, 1].')
     # defaults
     rng = np.random.default_rng() if rng is None else rng
 
-    return _run_once_def('ideal', code,hadamard_mat,hadamard_vec, 1, error_model, decoder, error_probability, 0.0, rng)
+    return _run_once_defN('ideal', code,hadamard_mat, 1, error_model, decoder, n_errors_code, 0.0, rng)
 
-def _run_once_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, decoder, error_probability, measurement_error_probability, rng):
+def _run_once_defN(mode, code,hadamard_mat, time_steps, error_model, decoder, n_errors_code, measurement_error_probability, rng):
     """Implements run_once and run_once_ftp functions"""
     # assumptions
     assert (mode == 'ideal' and time_steps == 1) or mode == 'ftp'
 
     # generate step_error, step_syndrome and step_measurement_error for each time step
-    n_qubits = code.n_k_d[0]
     
+    error_probability_sample=0.1
+    (pI,pX,pY,pZ)=error_model.probability_distribution(error_probability_sample)
+    error_Pauli=[]
+    error_Pauli.extend('X'*round(n_errors_code*pX/error_probability_sample))    
+    error_Pauli.extend('Y'*round(n_errors_code*pY/error_probability_sample))    
+    error_Pauli.extend('Z'*round(n_errors_code*pZ/error_probability_sample))    
+    error_Pauli.extend('I'*(n_qubits-len(error_Pauli)))
+
+    n_qubits = code.n_k_d[0]
+    hadamard_vec=np.zeros(n_qubits)
+
+    Nx=code.site_bounds[0]+1
+    Ny=code.site_bounds[1]+1
+    for i,j in np.ndindex(hadamard_mat.shape):
+        if hadamard_mat[i,j]==1:
+            hadamard_vec[j+(Ny-1-i)*Nx]=1
+
     for _ in range(time_steps):
         step_errors, step_syndromes, step_measurement_errors = [], [], []
-        step_error = error_model.generate(code, error_probability, rng)
+
+        # step_error: random error based on error probability
+        shuffle(error_Pauli)
+        # for i in range(n_qubits):
+        #     if hadamard_vec[i]==1:
+        #         if error_Pauli[i]=='X':
+        #             error_Pauli[i]='Z'
+        #         elif error_Pauli[i]=='Z':
+        #             error_Pauli[i]='X'
+
+        step_error=pt.pauli_to_bsf(''.join(error_Pauli))
+
+        # step_error = error_model.generate(code, error_probability, rng)
         for i in range(n_qubits):
             if hadamard_vec[i]==1:
                 step_error_temp=step_error[i]
@@ -78,12 +109,12 @@ def _run_once_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model,
         logger.debug('run: syndrome={}'.format(syndrome))
 
     # decoding: boolean or best match recovery operation based on decoder
-    ctx = {'error_model': error_model, 'error_probability': error_probability, 'error': error,
+    ctx = {'error_model': error_model, 'n_errors_code': n_errors_code, 'error': error,
            'step_errors': step_errors, 'measurement_error_probability': measurement_error_probability,
            'step_measurement_errors': step_measurement_errors}
     # convert syndrome to 1d if mode is 'ideal'
     if mode == 'ideal':  # convert syndrome to 1d and call decode
-        decoding = decoder.decode(code,hadamard_mat,hadamard_vec, syndrome[0], **ctx)
+        decoding = decoder.decode(code,hadamard_mat, syndrome[0], **ctx)
     if mode == 'ftp':  # call decode_ftp
         decoding = decoder.decode_ftp(code, time_steps, syndrome, **ctx)
 
@@ -137,7 +168,7 @@ def _run_once_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model,
     return data
 
 
-def _run_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, decoder, error_probability, measurement_error_probability,
+def _run_defN(mode, code,hadamard_mat, time_steps, error_model, decoder, n_errors_code, measurement_error_probability,
          max_runs=None, max_failures=None, random_seed=None):
     """Implements run and run_ftp functions"""
 
@@ -149,9 +180,9 @@ def _run_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, deco
         max_runs = 1
 
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug('run: code={}, time_steps={}, error_model={}, decoder={}, error_probability={},'
+        logger.debug('run: code={}, time_steps={}, error_model={}, decoder={}, n_errors_code={},'
                      'measurement_error_probability={} max_runs={}, max_failures={}, random_seed={}.'
-                     .format(code, time_steps, error_model, decoder, error_probability,
+                     .format(code, time_steps, error_model, decoder, n_errors_code,
                              measurement_error_probability, max_runs, max_failures, random_seed))
 
     wall_time_start = time.perf_counter()
@@ -162,7 +193,7 @@ def _run_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, deco
         'time_steps': time_steps,
         'error_model': error_model.label,
         'decoder': decoder.label,
-        'error_probability': error_probability,
+        'n_errors_code': n_errors_code,
         'measurement_error_probability': measurement_error_probability,
         'n_run': 0,
         'n_success': 0,
@@ -190,7 +221,7 @@ def _run_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, deco
     while ((max_runs is None or runs_data['n_run'] < max_runs)
            and (max_failures is None or runs_data['n_fail'] < max_failures)):
         # run simulation
-        data = _run_once_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, decoder, error_probability,
+        data = _run_once_defN(mode, code,hadamard_mat, time_steps, error_model, decoder, n_errors_code,
                          measurement_error_probability, rng)
         # increment run counts
         success_list[runs_data['n_run']]=data['success']
@@ -240,7 +271,7 @@ def _run_def(mode, code,hadamard_mat,hadamard_vec, time_steps, error_model, deco
     return [runs_data['logical_failure_rate'],runs_data['logical_failure_rate_errorbar']]
 
 
-def run_def(code,hadamard_mat,hadamard_vec, error_model, decoder, error_probability, max_runs=None, max_failures=None, random_seed=None):
+def run_defN(code,hadamard_mat, error_model, decoder, n_errors_code, max_runs=None, max_failures=None, random_seed=None):
     """
     Execute stabilizer code error-decode-recovery (ideal) simulation many times and return aggregated runs data.
 
@@ -264,7 +295,7 @@ def run_def(code,hadamard_mat,hadamard_vec, error_model, decoder, error_probabil
             'time_steps': 1,                        # always 1 for ideal simulation
             'error_model': 'Depolarizing',          # given error_model.label
             'decoder': 'Naive',                     # given decoder.label
-            'error_probability': 0.0,               # given error_probability
+            'n_errors_code': 0.0,                   # given n_errors_code
             'measurement_error_probability': 0.0    # always 0.0 for ideal simulation
             'n_run': 0,                             # count of runs
             'n_success': 0,                         # count of successful recovery
@@ -300,7 +331,7 @@ def run_def(code,hadamard_mat,hadamard_vec, error_model, decoder, error_probabil
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0, 1].')
-    return _run_def('ideal', code,hadamard_mat,hadamard_vec, 1, error_model, decoder, error_probability, 0.0, max_runs, max_failures, random_seed)
+    return _run_defN('ideal', code,hadamard_mat, 1, error_model, decoder, error_probability, 0.0, max_runs, max_failures, random_seed)
 
 
 def _add_rate_statistics(runs_data):

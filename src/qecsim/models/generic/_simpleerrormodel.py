@@ -5,6 +5,7 @@ import numpy as np
 
 from qecsim import paulitools as pt
 from qecsim.model import ErrorModel, cli_description
+from random import shuffle
 
 
 class SimpleErrorModel(ErrorModel):
@@ -32,13 +33,22 @@ class SimpleErrorModel(ErrorModel):
         * This method delegates to :meth:`probability_distribution` to find the probability of I, X, Y, Z operators on
           each qubit, assuming an IID error model.
         """
-        rng = np.random.default_rng() if rng is None else rng
         n_qubits = code.n_k_d[0]
+        rng = np.random.default_rng() if rng is None else rng
         error_pauli = ''.join(rng.choice(
             ('I', 'X', 'Y', 'Z'),
             size=n_qubits,
             p=self.probability_distribution(probability)
         ))
+        # (pI,pX,pY,pZ)=error_model.probability_distribution(probability)
+        # error_Pauli=[]
+        # error_Pauli.extend('X'*round(n_qubits*pX))    
+        # error_Pauli.extend('Y'*round(n_qubits*pY))    
+        # error_Pauli.extend('Z'*round(n_qubits*pZ))    
+        # error_Pauli.extend('I'*(n_qubits-len(error_Pauli)))  
+        # shuffle(error_Pauli)
+        # error_Pauli=''.join(error_Pauli)
+
         return pt.pauli_to_bsf(error_pauli)
 
     @property

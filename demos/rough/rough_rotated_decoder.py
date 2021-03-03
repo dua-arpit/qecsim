@@ -95,12 +95,6 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         3   V-s-V-s
             | |
         4   s-H
-
-        1 becomes (4,2), 2 -> (3.3), 3-> (2,4)
-        4 becomes  (3,1), 5 ->(2,2), 6->(1,3)
-        7 becomes (2,0), 8-> (1,1), 9->(0,2)
-
-        1 (tmax_r)
     """
 
     def __init__(self, chi=None, mode='c', tol=None):
@@ -169,7 +163,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # return sample
         return sample_recovery
 
-    def _coset_probabilities(self, prob_dist, hadamard_mat, sample_pauli):
+    def _coset_probabilities(self, prob_dist, hadamard_vec,hadamard_mat, sample_pauli):
         r"""
         Return the (approximate) probability and sample Pauli for the left coset :math:`fG` of the stabilizer group
         :math:`G` of the planar code with respect to the given sample Pauli :math:`f`, as well as for the cosets
@@ -194,7 +188,16 @@ class RotatedPlanarMPSDecoder_def(Decoder):
             sample_pauli.copy().logical_z()
         )
         # tensor networks: tns are common to both contraction by column and by row (after transposition)
-        tns = [self._tnc.create_tn(prob_dist, hadamard_mat, sp) for sp in sample_paulis]
+        tns = [self._tnc.create_tn(prob_dist, sp) for sp in sample_paulis]
+
+
+
+
+
+
+
+        tns= [self._tnc.modify_tn(tn, had_prob_dist, hadamard_mat,sample_pauli)
+
         # probabilities
         coset_ps = (0.0, 0.0, 0.0, 0.0)  # default coset probabilities
         coset_ps_col = coset_ps_row = None  # undefined coset probabilities by column and row
@@ -245,7 +248,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # results
         return tuple(coset_ps), sample_paulis
 
-    def decode(self, code, hadamard_mat, syndrome,
+    def decode(self, code, hadamard_vec,hadamard_mat, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
                error_probability=0.1, **kwargs):
         """
@@ -271,7 +274,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # probability distribution
         prob_dist = error_model.probability_distribution(error_probability)
         # coset probabilities, recovery operations
-        coset_ps, recoveries = self._coset_probabilities(prob_dist, hadamard_mat, any_recovery)
+        coset_ps, recoveries = self._coset_probabilities(prob_dist, hadamard_vec,hadamard_mat, any_recovery)
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
         # logging
@@ -302,6 +305,10 @@ class RotatedPlanarMPSDecoder_def(Decoder):
 
     def __repr__(self):
         return '{}({!r}, {!r}, {!r})'.format(type(self).__name__, self._chi, self._mode, self._tol)
+
+
+
+
 
     class TNC:
         """Tensor network creator"""
@@ -387,7 +394,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
             node = tt.tsr.delta(_shape(compass_direction))
             return node
 
-        def create_tn(self, prob_dist, hadamard_mat, sample_pauli):
+        def create_tn(self, prob_dist, sample_pauli):
             """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
             Note: The network contracts to the coset probability of the given sample_pauli.
             """
@@ -433,19 +440,47 @@ class RotatedPlanarMPSDecoder_def(Decoder):
                     q_pauli = sample_pauli.operator(code_index)
                     if is_z_plaquette:
                         #print(code_index)
-                        if hadamard_mat[code_index]:
-                            q_node = self.create_h_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
-                        else:
-                            q_node = self.create_h_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        q_node = self.create_h_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
                     else:
-                        if hadamard_mat[code_index]:
-                            q_node = self.create_v_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
-                        else:
-                            q_node = self.create_v_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        q_node = self.create_v_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
                     tn[q_node_index] = q_node
                 if code.is_in_plaquette_bounds(code_index):
                     s_node_index = _rotate_p_index(code_index, code)
                     s_node = self.create_s_node(_compass_p_direction(code_index, code))
                     tn[s_node_index] = s_node
-                    
             return tn
+
+
+        def modify_tn(tn, had_prob_dist, hadamard_mat,sample_pauli):
+            """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
+            Note: The network contracts to the coset probability of the given sample_pauli.
+            """
+
+            def _rotate_q_index(index, code):
+                """Convert code site index in format (x, y) to tensor network q-node index in format (r, c)"""
+                site_x, site_y = index  # qubit index in (x, y)
+                site_r, site_c = code.site_bounds[1] - site_y, site_x  # qubit index in (r, c)
+                return code.site_bounds[0] - site_c + site_r, site_r + site_c  # q-node index in (r, c)
+                
+            def _compass_q_direction(index, code):
+                """if the code site index lies on border of lattice then give that direction, else empty string."""
+                direction = {code.site_bounds[1]: 'n', 0: 's'}.get(index[1], '')
+                direction += {0: 'w', code.site_bounds[0]: 'e'}.get(index[0], '')
+                return direction
+
+            code = sample_pauli.code
+            max_site_x, max_site_y = code.site_bounds
+            for code_index in itertools.product(range(-1, max_site_x + 1), range(-1, max_site_y + 1)):
+                is_z_plaquette = code.is_z_plaquette(code_index)
+                if code.is_in_site_bounds(code_index):
+                    q_node_index = _rotate_q_index(code_index, code)
+                    q_pauli = sample_pauli.operator(code_index)
+                    if is_z_plaquette:
+                        #print(code_index)
+                        if hadamard_mat[code_index]:
+                            q_node = self.create_h_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                    else:
+                        if hadamard_mat[code_index]:
+                            q_node = self.create_v_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                    tn[q_node_index] = q_node
+            return tn   
