@@ -120,39 +120,39 @@ if __name__=='__main__':
                 if code_name=='CSS':
                     num_realiz=1
                     bias_str='Z'
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='XY':
                     bias_str='Y'
                     num_realiz=1
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='XZZX':
                     num_realiz=1
                     bias_str='Z'
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='XYYX':
                     num_realiz=1
                     bias_str='Y'
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='spiral_XZ':
                     num_realiz=1
                     bias_str='Z'
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='spiral_XY':
                     num_realiz=1
                     bias_str='Y'
-                    max_runs=20000
+                    max_runs=10000
                 elif code_name=='random_all':
-                    num_realiz=20
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]
                 elif code_name=='random_XY':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Y'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_XZ':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
