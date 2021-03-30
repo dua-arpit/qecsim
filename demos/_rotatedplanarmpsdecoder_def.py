@@ -245,7 +245,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         # results
         return tuple(coset_ps), sample_paulis
 
-    def decode(self, code, hadamard_mat, syndrome,
+    def decode(self, code, hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
                error_probability=0.1, **kwargs):
         """

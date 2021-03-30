@@ -147,7 +147,7 @@ class PlanarMPSDecoder_def(Decoder):
         # return sample
         return sample_recovery
 
-    def _coset_probabilities(self, prob_dist, sample_pauli, hadamard_mat):
+    def _coset_probabilities(self, prob_dist, sample_pauli, perm_mat,perm_vec):
         r"""
         Return the (approximate) probability and sample Pauli for the left coset :math:`fG` of the stabilizer group
         :math:`G` of the planar code with respect to the given sample Pauli :math:`f`, as well as for the cosets
@@ -172,7 +172,7 @@ class PlanarMPSDecoder_def(Decoder):
             sample_pauli.copy().logical_z()
         ]
         # tensor networks
-        tns = [self._tnc.create_tn(prob_dist, pauli,hadamard_mat) for pauli in sample_paulis]
+        tns = [self._tnc.create_tn(prob_dist,pauli,perm_mat,perm_vec) for pauli in sample_paulis]
         mask = self._tnc.create_mask(self._stp, tns[0].shape)  # same mask for all tns
         # probabilities
         coset_ps = (0.0, 0.0, 0.0, 0.0)  # default coset probabilities
@@ -242,7 +242,7 @@ class PlanarMPSDecoder_def(Decoder):
         # results
         return tuple(coset_ps), tuple(sample_paulis)
 
-    def decode(self, code, hadamard_mat, hadamard_vec, syndrome,
+    def decode(self, code, perm_mat,perm_vec, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
                error_probability=0.1, **kwargs):
         """
@@ -270,7 +270,7 @@ class PlanarMPSDecoder_def(Decoder):
         prob_dist = error_model.probability_distribution(error_probability)
 
         # coset probabilities, recovery operations
-        coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,hadamard_mat)
+        coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,perm_mat,perm_vec)
         
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
@@ -360,7 +360,7 @@ class PlanarMPSDecoder_def(Decoder):
             return node
 
         #just provide different hadamard matrices for different codes 
-        def create_tn(self, prob_dist, sample_pauli,hadamard_mat):
+        def create_tn(self, prob_dist, sample_pauli,perm_mat,perm_vec):
             """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
             Note: The network contracts to the coset probability of the given sample_pauli."""
             # initialise empty tn
@@ -370,7 +370,14 @@ class PlanarMPSDecoder_def(Decoder):
             col_to_direction = {0: 'w', tn.shape[1] - 1: 'e'}
 
             pi,px,py,pz=prob_dist
-            had_prob_dist= pi,pz,py,px
+            #XYZ,ZYX,XZY,YXZ,YZX,ZXY
+            prob_dist_mat=[0,1,2,3,4,5]
+            prob_dist_mat[0]=pi,px,py,pz
+            prob_dist_mat[1]=pi,pz,py,px
+            prob_dist_mat[2]=pi,px,pz,py
+            prob_dist_mat[3]=pi,py,px,pz
+            prob_dist_mat[4]=pi,py,pz,px
+            prob_dist_mat[5]=pi,pz,px,py
 
             # add nodes to tn
             for row, col in np.ndindex(tn.shape):
@@ -379,15 +386,9 @@ class PlanarMPSDecoder_def(Decoder):
                 direction += col_to_direction.get(col, '')
                 # add node
                 if 0 == row % 2 == col % 2:
-                    if(hadamard_mat[row,col]==0):
-                        tn[row, col] = self.create_h_node(prob_dist, sample_pauli.operator((row, col)), direction)
-                    else:
-                        tn[row, col] = self.create_h_node(had_prob_dist, sample_pauli.operator((row, col)), direction)
+                    tn[row, col] = self.create_h_node(prob_dist_mat[perm_mat[row,col]], sample_pauli.operator((row, col)), direction)
                 elif 1 == row % 2 == col % 2:
-                    if(hadamard_mat[row,col]==0):
-                        tn[row, col] = self.create_v_node(prob_dist, sample_pauli.operator((row, col)), direction)
-                    else:
-                        tn[row, col] = self.create_v_node(had_prob_dist, sample_pauli.operator((row, col)), direction)
+                    tn[row, col] = self.create_v_node(prob_dist_mat[perm_mat[row,col]], sample_pauli.operator((row, col)), direction)
                 else:
                     tn[row, col] = self.create_s_node(direction)
             return tn

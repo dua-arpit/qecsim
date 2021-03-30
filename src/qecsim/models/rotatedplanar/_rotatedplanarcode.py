@@ -46,6 +46,8 @@ class RotatedPlanarCode(StabilizerCode):
                |         |         |
              (0,0)-----(1,0)-----(2,0)
 
+    
+
     For example, stabilizer plaquette types and indices on a 3 x 3 lattice:
     ::
 
