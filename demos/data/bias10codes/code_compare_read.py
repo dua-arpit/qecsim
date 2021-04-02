@@ -29,7 +29,7 @@ if __name__=='__main__':
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    code_names=['random_XY','XY','CSS','XZZX','spiral_XZ','random_XZ','random_all']
+    code_names=['random_XY','XY','CSS','XZZX','spiral_XZ','random_XZ','random_XZ_YZ','random_all']
     perm_rates=[0,0,0,0,0,0]
     chi=12
     bias_str='Z'

@@ -45,7 +45,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ':
+    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ' or code_name=='random_XZ_YZ':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -104,13 +104,13 @@ if __name__=='__main__':
 
     # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
 
-    bias_list=[10,300]
+    bias_list=[300]
     code_names=['random_all']
 
-    bias_list=[300]
-    # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
-    # code_names=['CSS','XZZX','spiral_XZ','random_XZ','random_all','XY','random_XY']
-    code_names=['XY','CSS']
+    # bias_list=[300]
+    # # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
+    # # code_names=['CSS','XZZX','spiral_XZ','random_XZ','random_all','XY','random_XY']
+    # code_names=['XY','CSS']
 
     perm_rates=[0,0,0,0,0,0]
 

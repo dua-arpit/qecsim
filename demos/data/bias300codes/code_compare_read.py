@@ -18,7 +18,7 @@ if __name__=='__main__':
     
     sizes= range(8,9,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-    bias_list=[10]
+    bias_list=[300]
     layout_name='planar'
     bdry_name='surface'
 
