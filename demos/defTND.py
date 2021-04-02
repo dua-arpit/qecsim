@@ -43,7 +43,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ' or code_name='random_XZ_YZ':
+    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ' or code_name=='random_XZ_YZ':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -91,7 +91,10 @@ codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 bias_list=[0.5,10,40,100,300,1000,10**300]
 
 layout_name='planar'
-code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
+# code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
+
+bias_list=[10**300]
+code_names=['random_all']
 
 # set physical error probabilities
 error_probability_min,error_probability_max = 0.07,0.5
@@ -163,8 +166,6 @@ for bias in bias_list:
 
         pL_list_realiz=np.zeros((len(codes_and_size),num_realiz,len(error_probabilities)))
         std_list_realiz=np.zeros((len(codes_and_size),num_realiz,len(error_probabilities)))  
-
-        perm_rates=[0,0,0,0,0,0]
 
         for L_index,code in enumerate(codes_and_size):
             [pL_list[L_index],std_list[L_index],log_pL_list[L_index],log_std_list[L_index]]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
