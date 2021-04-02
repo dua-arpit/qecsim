@@ -43,7 +43,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ':
+    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ' or code_name='random_XZ_YZ':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))

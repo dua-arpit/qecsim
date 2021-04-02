@@ -27,7 +27,7 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name):
     n_qubits =code.n_k_d[0]
     perm_vec=[]
 
-    if code_name=='random_all' or code_name=='random_XZ' or code_name=='random_XY':
+    if code_name=='random_all' or code_name=='random_XZ' or code_name=='random_XY' or code_name=='random_XZ_YZ':
         for row,col in np.ndindex(perm_mat.shape):
             if (row%2==0 and col%2==0):
                 x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 

@@ -93,7 +93,6 @@ if __name__=='__main__':
 
     sizes= range(8,9,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-    bias_list=[300]
     p_min,p_max=0.01,0.40
     error_probabilities=np.linspace(p_min,p_max,40)
 
@@ -103,8 +102,14 @@ if __name__=='__main__':
     dirname="./data/"+'all_codes'+timestr
     os.mkdir(dirname)    #make a new directory with current date and time  
 
-    # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
+    # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
+
+    bias_list=[10,300]
+    code_names=['random_all']
+
+    bias_list=[300]
     code_names=['XY','CSS']
+
     perm_rates=[0,0,0,0,0,0]
 
     for L_index,code in enumerate(codes_and_size):
@@ -132,11 +137,16 @@ if __name__=='__main__':
                     num_realiz=1
                     bias_str='Z'
                     max_runs=20000
-                elif code_name=='random_all':
+                elif code_name=='random_XZ_YZ':
                     num_realiz=40
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/3,1/3,1/3,0,0,0]
+                elif code_name=='random_all':
+                    num_realiz=40
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
                 elif code_name=='random_XZ':
                     num_realiz=40
                     bias_str='Z'
