@@ -93,6 +93,7 @@ if __name__=='__main__':
 
     sizes= range(8,9,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+    bias_list=[300]
     p_min,p_max=0.01,0.40
     error_probabilities=np.linspace(p_min,p_max,40)
 
@@ -102,16 +103,9 @@ if __name__=='__main__':
     dirname="./data/"+'all_codes'+timestr
     os.mkdir(dirname)    #make a new directory with current date and time  
 
-    # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
-
-    bias_list=[10,300]
-    code_names=['random_all']
-
-    bias_list=[300]
     # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
     # code_names=['CSS','XZZX','spiral_XZ','random_XZ','random_all','XY','random_XY']
-    code_names=['XY','CSS']
-
+    code_names=['XY','random_XY']
     perm_rates=[0,0,0,0,0,0]
 
     for L_index,code in enumerate(codes_and_size):
@@ -139,16 +133,11 @@ if __name__=='__main__':
                     num_realiz=1
                     bias_str='Z'
                     max_runs=20000
-                elif code_name=='random_XZ_YZ':
-                    num_realiz=40
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/3,1/3,1/3,0,0,0]
                 elif code_name=='random_all':
                     num_realiz=40
                     bias_str='Z'
                     max_runs=2000
-                    perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
+                    perm_rates=[1/3,1/3,1/3,0,0,0]
                 elif code_name=='random_XZ':
                     num_realiz=40
                     bias_str='Z'
@@ -160,9 +149,9 @@ if __name__=='__main__':
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
 
-                error_model = BiasedDepolarizingErrorModel(bias,bias_str)
-                # bias=1/bias
-                # error_model=BiasedYXErrorModel(bias)
+                # error_model = BiasedDepolarizingErrorModel(bias,bias_str)
+                bias=1/bias
+                error_model=BiasedYXErrorModel(bias)
                 chi_val=12
                 decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                
