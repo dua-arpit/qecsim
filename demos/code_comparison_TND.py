@@ -45,7 +45,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random' or code_name=='random_XY' or code_name=='random_XZ':
+    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -93,7 +93,7 @@ if __name__=='__main__':
 
     sizes= range(8,9,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-    bias_list=[10,300]
+    bias_list=[300]
     p_min,p_max=0.01,0.40
     error_probabilities=np.linspace(p_min,p_max,40)
 
@@ -103,7 +103,8 @@ if __name__=='__main__':
     dirname="./data/"+'all_codes'+timestr
     os.mkdir(dirname)    #make a new directory with current date and time  
 
-    code_names=['spiral_XZ','random_XZ','random_all','random_XY']
+    # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
+    code_names=['XY','CSS']
     perm_rates=[0,0,0,0,0,0]
 
     for L_index,code in enumerate(codes_and_size):
@@ -112,7 +113,7 @@ if __name__=='__main__':
             plt.figure(figsize=(20,10))
             lines=["-",":","--","-."]
             linecycler=cycle(lines)
-            plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name)
+            plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+'L='+str(sizes[L_index]))
 
             for code_name in code_names:
                 if code_name=='CSS':
