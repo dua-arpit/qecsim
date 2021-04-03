@@ -104,16 +104,13 @@ if __name__=='__main__':
 
     # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
 
-    bias_list=[300]
-    code_names=['random_all']
+    bias_list=[10]
+    code_names=['random_all','random_XZ_YZ']
 
     # bias_list=[300]
     # # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
     # # code_names=['CSS','XZZX','spiral_XZ','random_XZ','random_all','XY','random_XY']
     # code_names=['XY','CSS']
-
-    perm_rates=[0,0,0,0,0,0]
-
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
             from itertools import cycle
@@ -173,18 +170,7 @@ if __name__=='__main__':
                 print('Decoder:',decoder.label)
                 print('Error probabilities:',error_probabilities)
                 print('Maximum runs:',max_runs)
-
-                #print(error_probabilities)
-                time1=time.perf_counter()
-
-                # [pL_list,std_list,log_pL_list,log_std_list]=fun_def_clean.pymatching_rand_diff_randomization_order(bias,bias_str,max_runs,L_list2,error_probabilities,code_name,num_realiz,periodic,rotated)
-                # [pL_list,std_list,log_pL_list,log_std_list]=fun_def_clean.pymatching_rand_code(bias,bias_str,max_runs,L_list2,error_probabilities,code_name,num_realiz,periodic,rotated)
-                # [pL_list,std_list,log_pL_list,log_std_list]=fun_def_clean.pymatching_rand(bias,bias_str,max_runs,L_list2,error_probabilities,code_name,num_realiz,periodic,rotated)
-                
                 [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
-
-                time2=time.perf_counter()
-                time2-time1
 
                 np.savetxt(dirname+"/p_list"+code_name+str(bias)[:7]+".csv",error_probabilities,delimiter=",")
                 np.savetxt(dirname+"/pL_list"+code_name+str(bias)[:7]+".csv",pL_list,delimiter=",")
