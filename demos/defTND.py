@@ -86,19 +86,20 @@ def square(a):
 vsquare=np.vectorize(square)
 
 # set models
-sizes= range(6,11,2)
+sizes= range(4,9,2)
 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 bias_list=[0.5,10,40,100,300,1000,10**300]
+bias_list=[10**300]
 
 layout_name='planar'
 # code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
 
 bias_list=[10**300]
-code_names=['random_all']
+code_names=['random_XZ']
 
 # set physical error probabilities
-error_probability_min,error_probability_max = 0.07,0.5
-error_probabilities = np.linspace(error_probability_min,error_probability_max,20)
+error_probability_min,error_probability_max = 0.35,0.5
+error_probabilities = np.linspace(error_probability_min,error_probability_max,10)
 
 timestr = time.strftime('%Y%m%d-%H%M%S ')   #record current date and time
 dirname='./data/'+timestr+layout_name+'all_codes'

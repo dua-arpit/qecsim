@@ -45,7 +45,8 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_XZ' or code_name=='random_YZX' or code_name=='random_ZXY':
+    # if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_XZ' or code_name=='random_YZX' or code_name=='random_ZXY':
+    if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_YZX':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -94,7 +95,7 @@ if __name__=='__main__':
     sizes= range(4,5,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.2,0.30
-    error_probabilities=np.linspace(p_min,p_max,3)
+    error_probabilities=np.linspace(p_min,p_max,10)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
@@ -149,14 +150,14 @@ if __name__=='__main__':
                     max_runs=2000
                     perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
                 elif code_name=='random_XZ':
-                    num_realiz=40
+                    num_realiz=20
                     bias_str='Z'
-                    max_runs=1000
+                    max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_ZXY':
-                    num_realiz=40
+                    num_realiz=20
                     bias_str='Z'
-                    max_runs=1000
+                    max_runs=2000
                     perm_rates=[1/2,0,0,0,0,1/2]
                     #XYZ->YXZ->YZX
 
