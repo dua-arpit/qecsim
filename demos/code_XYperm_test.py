@@ -43,11 +43,11 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_std_list=np.zeros(len(error_probabilities))
     
     # if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_XZ' or code_name=='random_YZX' or code_name=='random_ZXY':
-    if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_YZX':
+    if code_name[:6]=='random':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
-        #print(result)
+        print(result)
         p.close()
         p.join()
         for realization_index in range(num_realiz):
@@ -72,8 +72,8 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
             p.join()
 
             for i in range(len(error_probabilities)):
-                pL_list_realiz[realization_index][i]=result[realization_index][0][i]
-                std_list_realiz[realization_index][i]=result[realization_index][1][i]
+                pL_list_realiz[realization_index][i]=result[i][0]
+                std_list_realiz[realization_index][i]=result[i][1]
 
         pL_list = np.sum(pL_list_realiz,axis=0)/num_realiz
         std_list = np.sqrt(np.sum(vsquare(std_list_realiz),axis=0))/num_realiz  
@@ -115,7 +115,7 @@ if __name__=='__main__':
     # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
 
     bias_list=[10]
-    code_names=['random_XZ','random_ZXY']
+    code_names=['random_ZXY','random_XZ']
 
     # bias_list=[300]
     # # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
@@ -181,6 +181,7 @@ if __name__=='__main__':
                 print('codes_and_size:',[code.label for code in codes_and_size])
                 print('Error model:',error_model.label)
                 print('Decoder:',decoder.label)
+                print('number of realizations:',num_realiz)
                 print('Error probabilities:',error_probabilities)
                 print('Maximum runs:',max_runs)
                 [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
