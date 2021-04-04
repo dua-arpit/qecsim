@@ -131,7 +131,7 @@ for bias in bias_list:
             num_realiz=40
             bias_str='Z'
             max_runs=2000
-            perm_rates=[1/3,1/3,1/2-1/3,0,0,0]
+            perm_rates=[1/2,1/3,1/2-1/3,0,0,0]
         elif code_name=='random_all':
             num_realiz=40
             bias_str='Z'

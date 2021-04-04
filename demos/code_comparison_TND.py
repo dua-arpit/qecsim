@@ -125,13 +125,15 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
-    if bias==10:
-        code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
-    else:
-        code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
+
+    perm_rates=[1,0,0,0,0,0]
 
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
+            if bias==10:
+                code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
+            else:
+                code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
             from itertools import cycle
             plt.figure(figsize=(20,10))
             lines=["-",":","--","-."]
@@ -157,27 +159,27 @@ if __name__=='__main__':
                     bias_str='Z'
                     max_runs=20000
                 elif code_name=='random_XZ_YZ':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/3,1/3,1/3,0,0,0]
                 elif code_name=='random_all':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
                 elif code_name=='random_XZ':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_XY':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Y'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_ZXY':
-                    num_realiz=20
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/2,0,0,0,0,1/2]
@@ -185,7 +187,7 @@ if __name__=='__main__':
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
                 # bias=1/bias
                 # error_model=BiasedYXErrorModel(bias)
-                chi_val=None
+                chi_val=13
                 decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                
                 # print run parameters
