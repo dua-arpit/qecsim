@@ -119,6 +119,7 @@ if __name__=='__main__':
             linecycler=cycle(lines)
             plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+'L='+str(sizes[L_index]))
 
+            #XYZ,ZYX,XZY,YXZ,YZX,ZXY
             for code_name in code_names:
                 if code_name=='CSS':
                     num_realiz=1
@@ -137,14 +138,14 @@ if __name__=='__main__':
                     bias_str='Z'
                     max_runs=20000
                 elif code_name=='random_XZ_YZ':
-                    num_realiz=40
+                    num_realiz=50
                     bias_str='Z'
-                    max_runs=2000
+                    max_runs=3000
                     perm_rates=[1/3,1/3,1/3,0,0,0]
                 elif code_name=='random_all':
-                    num_realiz=40
+                    num_realiz=50
                     bias_str='Z'
-                    max_runs=2000
+                    max_runs=3000
                     perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
                 elif code_name=='random_XZ':
                     num_realiz=40
