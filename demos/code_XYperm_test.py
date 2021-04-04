@@ -45,7 +45,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    if code_name=='random_all' or code_name=='random_XY' or code_name=='random_XZ' or code_name=='random_XZ_YZ':
+    if code_name=='random_all' or code_name=='random_XZ_YZ' or code_name=='random_XZ' or code_name=='random_YZX':
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -91,10 +91,10 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(8,9,2)
+    sizes= range(6,7,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.01,0.40
-    error_probabilities=np.linspace(p_min,p_max,40)
+    error_probabilities=np.linspace(p_min,p_max,10)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
@@ -105,13 +105,15 @@ if __name__=='__main__':
     # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
 
     bias_list=[10]
-    code_names=['random_all','random_XZ_YZ']
+    code_names=['random_XZ','random_YZX']
 
     # bias_list=[300]
     # # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
     # # code_names=['CSS','XZZX','spiral_XZ','random_XZ','random_all','XY','random_XY']
     # code_names=['XY','CSS']
     for L_index,code in enumerate(codes_and_size):
+        #XYZ,ZYX,XZY,YXZ,YZX,ZXY
+
         for bias in bias_list:
             from itertools import cycle
             plt.figure(figsize=(20,10))
@@ -149,13 +151,14 @@ if __name__=='__main__':
                 elif code_name=='random_XZ':
                     num_realiz=40
                     bias_str='Z'
-                    max_runs=2000
+                    max_runs=500
                     perm_rates=[1/2,1/2,0,0,0,0]
-                elif code_name=='random_XY':
+                elif code_name=='random_YZX':
                     num_realiz=40
-                    bias_str='Y'
-                    max_runs=2000
-                    perm_rates=[1/2,1/2,0,0,0,0]
+                    bias_str='Z'
+                    max_runs=500
+                    perm_rates=[1/2,0,0,0,1/2,0]
+                    #XYZ->YXZ->YZX
 
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
                 # bias=1/bias
@@ -170,7 +173,6 @@ if __name__=='__main__':
                 print('Decoder:',decoder.label)
                 print('Error probabilities:',error_probabilities)
                 print('Maximum runs:',max_runs)
-               
                 [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
 
                 np.savetxt(dirname+"/p_list"+code_name+str(bias)[:7]+".csv",error_probabilities,delimiter=",")
