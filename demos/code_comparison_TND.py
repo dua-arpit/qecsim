@@ -157,27 +157,27 @@ if __name__=='__main__':
                     bias_str='Z'
                     max_runs=20000
                 elif code_name=='random_XZ_YZ':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/3,1/3,1/3,0,0,0]
                 elif code_name=='random_all':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
                 elif code_name=='random_XZ':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_XY':
-                    num_realiz=40
+                    num_realiz=30
                     bias_str='Y'
                     max_runs=2000
                     perm_rates=[1/2,1/2,0,0,0,0]
                 elif code_name=='random_ZXY':
-                    num_realiz=20
+                    num_realiz=30
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/2,0,0,0,0,1/2]
