@@ -20,7 +20,6 @@ from functools import partial
 
 
 def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,error_probability):
-    # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
     result= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_runs)
     return result
 
@@ -29,9 +28,7 @@ def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,er
     pL_list=np.zeros((len(error_probabilities)))
     std_list=np.zeros((len(error_probabilities)))  
 
-    # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
     for error_probability_index,error_probability in enumerate(error_probabilities):
-        # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
         [pL_list[error_probability_index],std_list[error_probability_index]]= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_runs)
 
     return [pL_list,std_list]
@@ -66,18 +63,30 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
             log_std_list[i]=std_list[i]/(pL_list[i]*np.log(10))
 
     else:
-        p=mp.Pool()
-        func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
-        result=p.map(func,error_probabilities)
-        print(result)
-        p.close()
-        p.join()
-        
-        for i in range(len(result)):
-            pL_list[i]=result[i][0]   
-            std_list[i]=result[i][1]
+        for realization_index in range(num_realiz):
+            p=mp.Pool()
+            func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
+            result=p.map(func,error_probabilities)
+            print(result)
+            p.close()
+            p.join()
+
+            for i in range(len(error_probabilities)):
+                pL_list_realiz[realization_index][i]=result[realization_index][0][i]
+                std_list_realiz[realization_index][i]=result[realization_index][1][i]
+
+        pL_list = np.sum(pL_list_realiz,axis=0)/num_realiz
+        std_list = np.sqrt(np.sum(vsquare(std_list_realiz),axis=0))/num_realiz  
+
+        for i in range(len(pL_list)):
             log_pL_list[i]=-np.log(pL_list[i])
             log_std_list[i]=std_list[i]/(pL_list[i]*np.log(10))
+                    
+        # for i in range(len(result)):
+        #     pL_list[i]=result[i][0]   
+        #     std_list[i]=result[i][1]
+        #     log_pL_list[i]=-np.log(pL_list[i])
+        #     log_std_list[i]=std_list[i]/(pL_list[i]*np.log(10))
 
     return [pL_list,std_list,log_pL_list,log_std_list]
 
