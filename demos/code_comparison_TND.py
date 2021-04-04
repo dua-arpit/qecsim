@@ -160,7 +160,7 @@ if __name__=='__main__':
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
                 # bias=1/bias
                 # error_model=BiasedYXErrorModel(bias)
-                chi_val=12
+                chi_val=None
                 decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                
                 # print run parameters
