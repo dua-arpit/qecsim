@@ -89,7 +89,6 @@ vsquare=np.vectorize(square)
 sizes= range(4,9,2)
 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 bias_list=[0.5,10,40,100,300,1000,10**300]
-bias_list=[10**300]
 
 layout_name='planar'
 # code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
