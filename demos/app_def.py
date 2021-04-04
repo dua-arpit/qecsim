@@ -28,6 +28,7 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name):
     perm_vec=[]
 
     if code_name[:6]=='random':
+        # print(perm_rates)
         for row,col in np.ndindex(perm_mat.shape):
             if (row%2==0 and col%2==0):
                 x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
@@ -64,7 +65,7 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name):
                     perm_mat[row,col]=1
                 perm_vec.append(perm_mat[row,col])
 
-    else:
+    elif code_name=='CSS' or code_name=='XY':
         for row,col in np.ndindex(perm_mat.shape):
             if (row%2==0 and col%2==0):
                 perm_vec.append(perm_mat[row,col])
@@ -97,21 +98,21 @@ def permute_error_Pauli(error_Pauli,perm_vec):
             elif error_Pauli[i]=='Y':
                 error_Pauli[i]='X'
 
-        elif perm_vec[i]==4: #YZX
-            if error_Pauli[i]=='X':
-                error_Pauli[i]='Y'
-            elif error_Pauli[i]=='Y':
-                error_Pauli[i]='Z'
-            elif error_Pauli[i]=='Z':
-                error_Pauli[i]='X'                    
-
-        elif perm_vec[i]==5: #ZXY
+        elif perm_vec[i]==4: #XYZ->YZX Schrodinger
             if error_Pauli[i]=='X':
                 error_Pauli[i]='Z'
             elif error_Pauli[i]=='Y':
                 error_Pauli[i]='X'
             elif error_Pauli[i]=='Z':
-                error_Pauli[i]='Y'               
+                error_Pauli[i]='Y'                    
+
+        elif perm_vec[i]==5: #XYZ->ZXY Schrodinger
+            if error_Pauli[i]=='X':
+                error_Pauli[i]='Y'
+            elif error_Pauli[i]=='Y':
+                error_Pauli[i]='Z'
+            elif error_Pauli[i]=='Z':
+                error_Pauli[i]='X'               
 
     step_error=pt.pauli_to_bsf(''.join(error_Pauli))                                        
 
@@ -120,20 +121,21 @@ def permute_error_Pauli(error_Pauli,perm_vec):
 
 logger = logging.getLogger(__name__)
 
-def run_once_def(code,error_model,decoder,error_probability,perm_rates,code_name,rng=None):
+def run_once_def(code,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,rng=None):
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0,1].')
     # defaults
     rng = np.random.default_rng() if rng is None else rng
 
-    return _run_once_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,code_name,0.0,rng)
+    return _run_once_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,0.0,rng)
 
-def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,code_name,measurement_error_probability,rng):
+def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,measurement_error_probability,rng):
     """Implements run_once and run_once_ftp functions"""
     # assumptions
     assert (mode == 'ideal' and time_steps == 1) or mode == 'ftp'
-    perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name)
+    if code_name[:6]=='random':
+        perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name)
 
     # generate step_error,step_syndrome and step_measurement_error for each time step
     n_qubits = code.n_k_d[0]
@@ -289,10 +291,12 @@ def _run_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rat
     error_weights = []  # list of error_weight from current run
     success_list = np.zeros(max_runs)
 
+    perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name)
+
     while ((max_runs is None or runs_data['n_run'] < max_runs)
            and (max_failures is None or runs_data['n_fail'] < max_failures)):
         # run simulation
-        data = _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,code_name,
+        data = _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,
                          measurement_error_probability,rng)
         # increment run counts
         success_list[runs_data['n_run']]=data['success']

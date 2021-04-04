@@ -104,7 +104,7 @@ if __name__=='__main__':
     sizes= range(4,5,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.2,0.30
-    error_probabilities=np.linspace(p_min,p_max,10)
+    error_probabilities=np.linspace(p_min,p_max,5)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time

@@ -94,7 +94,7 @@ layout_name='planar'
 # code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
 
 bias_list=[10**300]
-code_names=['random_XZ']
+code_names=['random_XZ_YZ']
 
 # set physical error probabilities
 error_probability_min,error_probability_max = 0.35,0.5
@@ -131,7 +131,7 @@ for bias in bias_list:
             num_realiz=40
             bias_str='Z'
             max_runs=2000
-            perm_rates=[1/3,1/3,1/3,0,0,0]
+            perm_rates=[1/3,1/3,1/2-1/3,0,0,0]
         elif code_name=='random_all':
             num_realiz=40
             bias_str='Z'
