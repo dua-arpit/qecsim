@@ -141,7 +141,7 @@ if __name__=='__main__':
                 plt.figure(figsize=(20,10))
                 lines=['-',':','--','-.']
                 linecycler=cycle(lines)
-                plt.title('TND thresholds at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+','+str(pXZ)+','+str(pYZ))
+                plt.title('TND threshold at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+','+str(pXZ)+','+str(pYZ))
                 perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]
 
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
@@ -167,7 +167,7 @@ if __name__=='__main__':
                 for L_index,code in enumerate(codes_and_size):
                    [pL_list[L_index],std_list[L_index],log_pL_list[L_index],log_std_list[L_index]]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
                 for L_index,code in enumerate(codes_and_size):
-                    plt.errorbar(-np.log(error_probabilities),log_pL_list[L_index],log_std_list[L_index])
+                    plt.errorbar(-np.log(error_probabilities),pL_list[L_index],std_list[L_index])
 
                 # np.savetxt(dirname+'/p_list'+code_name+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
                 # np.savetxt(dirname+'/pL_list'+code_name+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+str(bias)[:7]+'.csv',pL_list,delimiter=',')
@@ -180,9 +180,9 @@ if __name__=='__main__':
                 
                 # legends.append('pXZ,pYZ='+str(pXZ)+','+str(pYZ))
 
-                plt.xlabel('-log(p)')
-                plt.ylabel('$-log(p_L)$')
-                plt.legend(legends) 
-                plt.savefig(dirname+'/code_comparison_XZ_YZ,'+str(pXZ)+','+str(pYZ)+'.pdf')
+                plt.xlabel('p')
+                plt.ylabel('$p_L$')
+                plt.legend(sizes) 
+                plt.savefig(dirname+'/threshold_XZ_YZ,'+str(pXZ)+','+str(pYZ)+'.pdf')
 
 
