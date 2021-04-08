@@ -29,7 +29,7 @@ if __name__=='__main__':
     log_pL_list=np.zeros(len(error_probabilities))
     log_std_list=np.zeros(len(error_probabilities))
     
-    code_names=['random_XY','XY','CSS','XZZX','spiral_XZ','random_XZ','random_XZ_YZ','random_all']
+    code_names=['random_XY','XY','CSS','XZZX','spiral_XZ','random_XZ','random_XZ_YZ','random_XZ_YZ2']
     perm_rates=[0,0,0,0,0,0]
     chi=12
     bias_str='Z'
@@ -43,6 +43,13 @@ if __name__=='__main__':
             plt.title('TND failure rate scaling comparison at '+bias_str+' bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+',L='+str(sizes[L_index])+',chi='+str(chi))
 
             for code_name in code_names:
+                if code_name=='random_XZ_YZ2':
+                    p_min,p_max=0.01,0.50
+                    error_probabilities=np.linspace(p_min,p_max,20)
+                    pL_list=np.zeros(len(error_probabilities))
+                    std_list=np.zeros(len(error_probabilities))
+                    log_pL_list=np.zeros(len(error_probabilities))
+                    log_std_list=np.zeros(len(error_probabilities))
                 error_probabilities=np.loadtxt("p_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
                 pL_list=np.loadtxt("pL_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
                 std_list=np.loadtxt("std_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
