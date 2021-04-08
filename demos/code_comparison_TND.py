@@ -46,6 +46,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     log_std_list=np.zeros(len(error_probabilities))
     
     if code_name[:6]=='random':
+        print(perm_rates)
         p=mp.Pool()
         func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
         result=p.map(func,range(num_realiz))
@@ -108,10 +109,10 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(10,11,2)
+    sizes= range(6,7,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.01,0.50
-    error_probabilities=np.linspace(p_min,p_max,20)
+    error_probabilities=np.linspace(p_min,p_max,6)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
@@ -125,15 +126,18 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
+    bias_list=[10]
 
     perm_rates=[1,0,0,0,0,0]
 
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
-            if bias==10:
-                code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
-            else:
-                code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
+            # if bias==10:
+            #     code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
+            # else:
+            # code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
+            code_names=['random_XZ_YZ','random_XZ_YZ2']
+            # code_names=['random_XZ_YZ']
             from itertools import cycle
             plt.figure(figsize=(20,10))
             lines=["-",":","--","-."]
@@ -159,7 +163,12 @@ if __name__=='__main__':
                     bias_str='Z'
                     max_runs=20000
                 elif code_name=='random_XZ_YZ':
-                    num_realiz=30
+                    num_realiz=10
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/2,1/3,1/2-1/3,0,0,0]
+                elif code_name=='random_XZ_YZ2':
+                    num_realiz=10
                     bias_str='Z'
                     max_runs=2000
                     perm_rates=[1/3,1/3,1/3,0,0,0]
@@ -187,7 +196,7 @@ if __name__=='__main__':
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
                 # bias=1/bias
                 # error_model=BiasedYXErrorModel(bias)
-                chi_val=13
+                chi_val=12
                 decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                
                 # print run parameters

@@ -101,7 +101,7 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(4,5,2)
+    sizes= range(8,5,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.2,0.30
     error_probabilities=np.linspace(p_min,p_max,5)
@@ -152,7 +152,7 @@ if __name__=='__main__':
                     num_realiz=40
                     bias_str='Z'
                     max_runs=2000
-                    perm_rates=[1/3,1/3,1/3,0,0,0]
+                    perm_rates=[1/3,1/3,1/2-1/3,0,0,0]
                 elif code_name=='random_all':
                     num_realiz=40
                     bias_str='Z'
