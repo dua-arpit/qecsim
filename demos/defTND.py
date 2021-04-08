@@ -164,9 +164,6 @@ for bias in bias_list:
         log_pL_list =np.zeros((len(codes_and_size),len(error_probabilities)))
         log_std_list=np.zeros((len(codes_and_size),len(error_probabilities)))
 
-        pL_list_realiz=np.zeros((len(codes_and_size),num_realiz,len(error_probabilities)))
-        std_list_realiz=np.zeros((len(codes_and_size),num_realiz,len(error_probabilities)))  
-
         for L_index,code in enumerate(codes_and_size):
             [pL_list[L_index],std_list[L_index],log_pL_list[L_index],log_std_list[L_index]]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
 

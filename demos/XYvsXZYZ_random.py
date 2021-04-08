@@ -108,10 +108,10 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(8,9,2)
+    sizes= range(10,11,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-    p_min,p_max=0.1,0.45
-    error_probabilities=np.linspace(p_min,p_max,12)
+    p_min,p_max=0.01,0.50
+    error_probabilities=np.linspace(p_min,p_max,8)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
@@ -124,15 +124,11 @@ if __name__=='__main__':
     # # code_names=['spiral_XZ','random_XZ','random_all','random_XY']
     # code_names=['XY','CSS']
 
-    bias_list=[100]
-    code_names=['random_XZ_YZ']
+    bias_list=[10,100,1000,10**300]
+
+    code_names=['XY','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
 
     perm_rates=[1,0,0,0,0,0]
-    num_realiz=40
-    bias_str='Z'
-    max_runs=500
-    legends=[]
-    pXZ_list=[1/4,1/3,2/5,1/2]
 
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
@@ -144,36 +140,83 @@ if __name__=='__main__':
 
             #XYZ,ZYX,XZY,YXZ,YZX,ZXY
             for code_name in code_names:
-                for pXZ in pXZ_list:
-                    for pYZ in pXZ_list:
-                        perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]
-
-                        error_model = BiasedDepolarizingErrorModel(bias,bias_str)
-                        # bias=1/bias
-                        # error_model=BiasedYXErrorModel(bias)
-                        chi_val=12
-                        decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
+                if code_name=='CSS':
+                    num_realiz=1
+                    bias_str='Z'
+                    max_runs=20000
+                elif code_name=='XY':
+                    bias_str='Y'
+                    num_realiz=1
+                    max_runs=20000
+                elif code_name=='XZZX':
+                    num_realiz=1
+                    bias_str='Z'
+                    max_runs=20000
+                elif code_name=='spiral_XZ':
+                    num_realiz=1
+                    bias_str='Z'
+                    max_runs=20000
+                elif code_name=='random_XZ_YZ3':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/4,1/4,1/2,0,0,0]
+                elif code_name=='random_XZ_YZ2':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/6,1/2,1/3,0,0,0]                    
+                elif code_name=='random_XZ_YZ1':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[0,1/2,1/2,0,0,0]
+                elif code_name=='random_XZ_YZ0':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/3,1/3,1/3,0,0,0]
+                elif code_name=='random_XZ':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/2,1/2,0,0,0,0]
+                elif code_name=='random_XY':
+                    num_realiz=30
+                    bias_str='Y'
+                    max_runs=2000
+                    perm_rates=[1/2,1/2,0,0,0,0]
+                elif code_name=='random_ZXY':
+                    num_realiz=30
+                    bias_str='Z'
+                    max_runs=2000
+                    perm_rates=[1/2,0,0,0,0,1/2]
                     
-                        # print run parameters
-                        print('code_name:',code_name)
-                        print('codes_and_size:',[code.label for code in codes_and_size])
-                        print('Error model:',error_model.label)
-                        print('Decoder:',decoder.label)
-                        print('Error probabilities:',error_probabilities)
-                        print('Maximum runs:',max_runs)
-                    
-                        [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
+                error_model = BiasedDepolarizingErrorModel(bias,bias_str)
+                # bias=1/bias
+                # error_model=BiasedYXErrorModel(bias)
+                chi_val=13
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
+               
+                # print run parameters
+                print('code_name:',code_name)
+                print('codes_and_size:',[code.label for code in codes_and_size])
+                print('Error model:',error_model.label)
+                print('Decoder:',decoder.label)
+                print('Error probabilities:',error_probabilities)
+                print('Maximum runs:',max_runs)
+               
+                [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
 
-                        np.savetxt(dirname+"/p_list"+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+".csv",error_probabilities,delimiter=",")
-                        np.savetxt(dirname+"/pL_list"+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+".csv",pL_list,delimiter=",")
-                        np.savetxt(dirname+"/std_list"+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+".csv",std_list,delimiter=",")
+                np.savetxt(dirname+"/p_list"+code_name+str(bias)[:7]+".csv",error_probabilities,delimiter=",")
+                np.savetxt(dirname+"/pL_list"+code_name+str(bias)[:7]+".csv",pL_list,delimiter=",")
+                np.savetxt(dirname+"/std_list"+code_name+str(bias)[:7]+".csv",std_list,delimiter=",")
 
-                        plt.errorbar(-np.log(error_probabilities),log_pL_list,log_std_list)
-                        legends.append('pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4])
+                plt.errorbar(-np.log(error_probabilities),log_pL_list,log_std_list)
 
             plt.xlabel('-log(p)')
             plt.ylabel('$-log(p_L)$')
-            plt.legend(legends) 
-            plt.savefig(dirname+"/code_comparison_XZ_YZ_bias="+str(bias)[:7]+".pdf")
+            plt.legend(code_names) 
+            plt.savefig(dirname+"/scaling_code_comparison_bias="+str(bias)[:7]+".pdf")
 
 

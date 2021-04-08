@@ -65,6 +65,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
             log_std_list[i]=std_list[i]/(pL_list[i]*np.log(10))
 
     else:
+        print('hello')
         p=mp.Pool()
         func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
         result=p.map(func,error_probabilities)
@@ -108,10 +109,10 @@ if __name__=='__main__':
     layout_name='planar'
     bdry_name='surface'
 
-    sizes= range(4,7,2)
+    sizes= range(4,9,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
-    p_min,p_max=0.1,0.50
-    error_probabilities=np.linspace(p_min,p_max,20)
+    p_min,p_max=0.25,0.50
+    error_probabilities=np.linspace(p_min,p_max,30)
 
     #export data
     timestr=time.strftime('%Y%m%d-%H%M%S')   #record current date and time
@@ -125,23 +126,21 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10**300]
-    code_name=['random_XZ_YZ']
+    code_name='random_XZ_YZ'
 
-    perm_rates=[1,0,0,0,0,0]
     num_realiz=40
     bias_str='Z'
-    max_runs=2000
+    max_runs=500
     legends=[]
+    pXZ_list=[2/5,1/2]
+    pYZ_list=[1/4,1/3,2/5,1/2]
+
 
     for bias in bias_list:
         from itertools import cycle
         #XYZ,ZYX,XZY,YXZ,YZX,ZXY
-        for pXZ in np.linspace(1/4,1/2,3):
-            for pYZ in np.linspace(1/4,1/3,3):
-                plt.figure(figsize=(20,10))
-                lines=['-',':','--','-.']
-                linecycler=cycle(lines)
-                plt.title('TND threshold at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+','+str(pXZ)+','+str(pYZ))
+        for pXZ in pXZ_list:
+            for pYZ in pYZ_list:
                 perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]
 
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
@@ -166,23 +165,37 @@ if __name__=='__main__':
 
                 for L_index,code in enumerate(codes_and_size):
                    [pL_list[L_index],std_list[L_index],log_pL_list[L_index],log_std_list[L_index]]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
-                for L_index,code in enumerate(codes_and_size):
-                    plt.errorbar(-np.log(error_probabilities),pL_list[L_index],std_list[L_index])
+                # np.savetxt(dirname+'/p_list'+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
+                # np.savetxt(dirname+'/pL_list'+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+'.csv',pL_list,delimiter=',')
+                # np.savetxt(dirname+'/std_list'+code_name+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+str(bias)[:7]+'.csv',std_list,delimiter=',')
 
-                # np.savetxt(dirname+'/p_list'+code_name+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
-                # np.savetxt(dirname+'/pL_list'+code_name+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+str(bias)[:7]+'.csv',pL_list,delimiter=',')
-                # np.savetxt(dirname+'/std_list'+code_name+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+str(bias)[:7]+'.csv',std_list,delimiter=',')
-
-                np.savetxt(dirname+'/p_list'+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+'.csv',error_probabilities,delimiter=',')
-                np.savetxt(dirname+'/pL_list'+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+'.csv',pL_list,delimiter=',')
-                np.savetxt(dirname+'/std_list'+'pXZ,pYZ='+str(pXZ)+','+str(pYZ)+'.csv',std_list,delimiter=',')                
+                np.savetxt(dirname+'/p_list'+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+'.csv',error_probabilities,delimiter=',')
+                np.savetxt(dirname+'/pL_list'+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+'.csv',pL_list,delimiter=',')
+                np.savetxt(dirname+'/std_list'+'pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ)[:4]+'.csv',std_list,delimiter=',')                
 
                 
-                # legends.append('pXZ,pYZ='+str(pXZ)+','+str(pYZ))
+                # legends.append('pXZ,pYZ='+str(pXZ)[:4]+','+str(pYZ))
 
+                from itertools import cycle
+                plt.figure(figsize=(20,10))
+                lines = ['-',':','--','-.']
+                linecycler = cycle(lines)
+                plt.title('TND threshold at bias='+str(bias)[:7]+' and chi= '+str(chi_val)+' for '+layout_name+','+code_name+','+str(pXZ)[:4]+','+str(pYZ)[:4])
+                for sizes_index,size in enumerate(sizes):
+                    plt.errorbar(error_probabilities,pL_list[sizes_index],std_list[sizes_index])
                 plt.xlabel('p')
                 plt.ylabel('$p_L$')
                 plt.legend(sizes) 
-                plt.savefig(dirname+'/threshold_XZ_YZ,'+str(pXZ)+','+str(pYZ)+'.pdf')
+                plt.savefig(dirname+'/threshold_plot_bias_'+str(bias)[:7]+str(pXZ)[:4]+','+str(pYZ)[:4]+'.pdf')
 
-
+                from itertools import cycle
+                plt.figure(figsize=(20,10))
+                lines = ['-',':','--','-.']
+                linecycler = cycle(lines)
+                plt.title('TND failure rate scaling at bias='+str(bias)[:7]+' and chi='+str(chi_val)+' for '+layout_name+' '+code_name+','+str(pXZ)[:4]+','+str(pYZ)[:4])
+                for sizes_index,size in enumerate(sizes):
+                    plt.errorbar(error_probabilities,log_pL_list[sizes_index],log_std_list[sizes_index])
+                plt.xlabel('p')
+                plt.ylabel('$-log(p_L)$')
+                plt.legend(sizes) 
+                plt.savefig(dirname+'/log_scaling_plot_bias_'+str(bias)[:7]+str(pXZ)[:4]+','+str(pYZ)[:4]+'.pdf')
