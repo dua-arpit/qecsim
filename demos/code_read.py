@@ -126,10 +126,10 @@ if __name__=='__main__':
 
     bias_list=[10,100,1000,10**300]
 
-    # code_names=['XY','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
-    code_names=['random_XZ_YZ4']
+    code_names=['XY','random_XZ_YZ4','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
 
     perm_rates=[1,0,0,0,0,0]
+    chi_val=13
 
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
@@ -137,86 +137,13 @@ if __name__=='__main__':
             plt.figure(figsize=(20,10))
             lines=['-',':','--','-.']
             linecycler=cycle(lines)
-            plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout+' '+bdry_name+'L='+str(sizes[L_index]))
+            plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout+' '+bdry_name+', L='+str(sizes[L_index])+', chi='+str(chival))
 
             #XYZ,ZYX,XZY,YXZ,YZX,ZXY
-            for code_name in code_names:
-                if code_name=='CSS':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='XY':
-                    bias_str='Y'
-                    num_realiz=1
-                    max_runs=20000
-                elif code_name=='XZZX':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='spiral_XZ':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='random_XZ_YZ4':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/6,1/3,1/2,0,0,0]
-                elif code_name=='random_XZ_YZ3':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/4,1/4,1/2,0,0,0]
-                elif code_name=='random_XZ_YZ2':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/6,1/2,1/3,0,0,0]                    
-                elif code_name=='random_XZ_YZ1':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[0,1/2,1/2,0,0,0]
-                elif code_name=='random_XZ_YZ0':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/3,1/3,1/3,0,0,0]
-                elif code_name=='random_XZ':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/2,1/2,0,0,0,0]
-                elif code_name=='random_XY':
-                    num_realiz=30
-                    bias_str='Y'
-                    max_runs=2000
-                    perm_rates=[1/2,1/2,0,0,0,0]
-                elif code_name=='random_ZXY':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/2,0,0,0,0,1/2]
-                    
-                error_model = BiasedDepolarizingErrorModel(bias,bias_str)
-                # bias=1/bias
-                # error_model=BiasedYXErrorModel(bias)
-                chi_val=13
-                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
-               
-                # print run parameters
-                print('code_name:',code_name)
-                print('codes_and_size:',[code.label for code in codes_and_size])
-                print('Error model:',error_model.label)
-                print('Decoder:',decoder.label)
-                print('Error probabilities:',error_probabilities)
-                print('Maximum runs:',max_runs)
-               
-                [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
-
-                np.savetxt(dirname+'/p_list'+code_name+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
-                np.savetxt(dirname+'/pL_list'+code_name+str(bias)[:7]+'.csv',pL_list,delimiter=',')
-                np.savetxt(dirname+'/std_list'+code_name+str(bias)[:7]+'.csv',std_list,delimiter=',')
+            for code_name in code_names:                                   
+                error_probabilities=np.loadtxt("p_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
+                pL_list=np.loadtxt("pL_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
+                std_list=np.loadtxt("std_list"+code_name+str(bias)[:7]+".csv",delimiter=",")
 
                 plt.errorbar(-np.log(error_probabilities),log_pL_list,log_std_list)
 

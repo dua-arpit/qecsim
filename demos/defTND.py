@@ -90,7 +90,7 @@ sizes= range(4,9,2)
 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 bias_list=[0.5,10,40,100,300,1000,10**300]
 
-layout_name='planar'
+layout='planar'
 # code_names=['XZZX','XY','CSS','spiral_XZ','random_XZ','random_all','random_XY']
 
 bias_list=[10]
@@ -101,7 +101,7 @@ error_probability_min,error_probability_max = 0.35,0.5
 error_probabilities = np.linspace(error_probability_min,error_probability_max,10)
 
 timestr = time.strftime('%Y%m%d-%H%M%S ')   #record current date and time
-dirname='./data/'+timestr+layout_name+'all_codes'
+dirname='./data/'+timestr+layout+'all_codes'
 os.mkdir(dirname)     
 
 for bias in bias_list:
@@ -175,7 +175,7 @@ for bias in bias_list:
         plt.figure(figsize=(20,10))
         lines = ['-',':','--','-.']
         linecycler = cycle(lines)
-        plt.title('TND at bias='+str(bias)[:7]+' and chi='+str(chi_val)+' for '+layout_name+' '+code_name)
+        plt.title('TND at bias='+str(bias)[:7]+' and chi='+str(chi_val)+' for '+layout+' '+code_name)
         for sizes_index,size in enumerate(sizes):
             plt.errorbar(error_probabilities,pL_list[sizes_index],std_list[sizes_index])
         plt.xlabel('p')
@@ -187,7 +187,7 @@ for bias in bias_list:
         plt.figure(figsize=(20,10))
         lines = ['-',':','--','-.']
         linecycler = cycle(lines)
-        plt.title('TND failure rate scaling at bias='+str(bias)[:7]+' and chi='+str(chi_val)+' for '+layout_name+' '+code_name)
+        plt.title('TND failure rate scaling at bias='+str(bias)[:7]+' and chi='+str(chi_val)+' for '+layout+' '+code_name)
         for sizes_index,size in enumerate(sizes):
             plt.errorbar(error_probabilities,log_pL_list[sizes_index],log_std_list[sizes_index])
         plt.xlabel('p')

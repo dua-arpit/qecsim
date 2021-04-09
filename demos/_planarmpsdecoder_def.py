@@ -147,7 +147,7 @@ class PlanarMPSDecoder_def(Decoder):
         # return sample
         return sample_recovery
 
-    def _coset_probabilities(self, prob_dist, sample_pauli, perm_mat,perm_vec):
+    def _coset_probabilities(self, prob_dist, sample_pauli, perm_mat):
         r"""
         Return the (approximate) probability and sample Pauli for the left coset :math:`fG` of the stabilizer group
         :math:`G` of the planar code with respect to the given sample Pauli :math:`f`, as well as for the cosets
@@ -172,7 +172,7 @@ class PlanarMPSDecoder_def(Decoder):
             sample_pauli.copy().logical_z()
         ]
         # tensor networks
-        tns = [self._tnc.create_tn(prob_dist,pauli,perm_mat,perm_vec) for pauli in sample_paulis]
+        tns = [self._tnc.create_tn(prob_dist,pauli,perm_mat) for pauli in sample_paulis]
         mask = self._tnc.create_mask(self._stp, tns[0].shape)  # same mask for all tns
         # probabilities
         coset_ps = (0.0, 0.0, 0.0, 0.0)  # default coset probabilities
@@ -242,7 +242,7 @@ class PlanarMPSDecoder_def(Decoder):
         # results
         return tuple(coset_ps), tuple(sample_paulis)
 
-    def decode(self, code, perm_mat,perm_vec, syndrome,
+    def decode(self, code, perm_mat, syndrome,
                error_model=DepolarizingErrorModel(),  # noqa: B008
                error_probability=0.1, **kwargs):
         """
@@ -270,7 +270,7 @@ class PlanarMPSDecoder_def(Decoder):
         prob_dist = error_model.probability_distribution(error_probability)
 
         # coset probabilities, recovery operations
-        coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,perm_mat,perm_vec)
+        coset_ps, recoveries = self._coset_probabilities(prob_dist, any_recovery,perm_mat)
         
         # most likely recovery operation
         max_coset_p, max_recovery = max(zip(coset_ps, recoveries), key=lambda coset_p_recovery: coset_p_recovery[0])
@@ -360,7 +360,7 @@ class PlanarMPSDecoder_def(Decoder):
             return node
 
         #just provide different hadamard matrices for different codes 
-        def create_tn(self, prob_dist, sample_pauli,perm_mat,perm_vec):
+        def create_tn(self, prob_dist, sample_pauli,perm_mat):
             """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
             Note: The network contracts to the coset probability of the given sample_pauli."""
             # initialise empty tn

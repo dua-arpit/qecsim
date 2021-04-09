@@ -17,7 +17,7 @@ from qecsim import paulitools as pt
 
 def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
 
-    if layout=='planar'
+    if layout=='planar':
         seed_sequence = np.random.SeedSequence()
         rng = np.random.default_rng(seed_sequence)    
         
@@ -76,33 +76,32 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
 
     elif layout=='rotated':
 
-        size=code.site_bounds
-        perm_mat=np.zeros((size,size))
+        perm_mat=np.zeros((code.site_bounds[0]+1,code.site_bounds[1]+1),dtype=int)
         nrows, ncols=perm_mat.shape
         perm_vec=np.zeros(np.prod((nrows,ncols)))
-        
+
         if code_name[:6]=='random':
             # print(perm_rates)
-            for col, row in np.ndindex(nrows,ncols):
+            for row,col in np.ndindex(nrows,ncols):
                 if (row+col)%2==0:
                     x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
-                    perm_mat[col,row]=x[0]
+                    perm_mat[row,col]=x[0]
 
             perm_vec=np.zeros(np.prod((nrows,ncols)))
-            for col, row in np.ndindex(nrows,ncols):
-                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+            for row,col in np.ndindex(nrows,ncols):
+                perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
         elif code_name=='XZZX':
-            for col, row in np.ndindex(nrows,ncols):
+            for row,col in np.ndindex(nrows,ncols):
                 if (row+col)%2==0:
-                    perm_mat[col,row]=1
+                    perm_mat[row,col]=1
 
             perm_vec=np.zeros(np.prod((nrows,ncols)))
-            for col, row in np.ndindex(nrows,ncols):
-                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+            for row,col in np.ndindex(nrows,ncols):
+                perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
         elif code_name[:6]=='spiral':
-            for col, row in np.ndindex(perm_mat.shape):
+            for row,col in np.ndindex(nrows,ncols):
                 if row%2==0:
                     if row%4==0:
                         perm_mat[row,range(0,ncols-1)]=1
@@ -115,17 +114,17 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
                         perm_mat[row,0]=1
 
             perm_vec=np.zeros(np.prod((nrows,ncols)))
-            for col, row in np.ndindex(nrows,ncols):
-                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+            for row,col in np.ndindex(nrows,ncols):
+                perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
         elif code_name=='CSS' or code_name=='XY':
-            for col, row in np.ndindex(nrows,ncols):
+            for row,col in np.ndindex(nrows,ncols):
                 if (row+col)%2==0:
                     perm_mat[col,row]=0
 
             perm_vec=np.zeros(np.prod((nrows,ncols)))
             for col, row in np.ndindex(nrows,ncols):
-                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+                perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
     return perm_mat,perm_vec
 
@@ -241,7 +240,7 @@ def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,per
            'step_measurement_errors': step_measurement_errors}
     # convert syndrome to 1d if mode is 'ideal'
     if mode == 'ideal':  # convert syndrome to 1d and call decode
-        decoding = decoder.decode(code,perm_mat,perm_vec,syndrome[0],**ctx)
+        decoding = decoder.decode(code,perm_mat,syndrome[0],**ctx)
     if mode == 'ftp':  # call decode_ftp
         decoding = decoder.decode_ftp(code,time_steps,syndrome,**ctx)
 

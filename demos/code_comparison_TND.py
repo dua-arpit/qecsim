@@ -7,12 +7,16 @@ import qecsim
 from qecsim import app
 from qecsim.models.generic import PhaseFlipErrorModel,DepolarizingErrorModel,BiasedDepolarizingErrorModel,BiasedYXErrorModel
 from qecsim.models.planar import PlanarCode,PlanarMPSDecoder
+from qecsim.models.rotatedplanar import RotatedPlanarCode, RotatedPlanarMPSDecoder
+
 # from _planarmpsdecoder_def import PlanarMPSDecoder_def
 import app_def
 import _planarmpsdecoder_def
+import _rotatedplanarmpsdecoder_def
 import importlib as imp
 imp.reload(app_def)
 imp.reload(_planarmpsdecoder_def)
+imp.reload(_rotatedplanarmpsdecoder_def)
 import os,time
 import multiprocessing as mp
 from functools import partial
@@ -106,11 +110,9 @@ if __name__=='__main__':
     def square(a):
         return a**2
     vsquare=np.vectorize(square)
-    layout='planar'
     bdry_name='surface'
 
     sizes= range(6,7,2)
-    codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.01,0.50
     error_probabilities=np.linspace(p_min,p_max,6)
 
@@ -126,88 +128,127 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
-    bias_list=[10]
+    bias_list=[100]
 
     perm_rates=[1,0,0,0,0,0]
 
-    for L_index,code in enumerate(codes_and_size):
-        for bias in bias_list:
-            # if bias==10:
-            #     code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
-            # else:
-            # code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
-            code_names=['random_XZ_YZ','random_XZ_YZ2']
-            # code_names=['random_XZ_YZ']
-            from itertools import cycle
-            plt.figure(figsize=(20,10))
-            lines=['-',':','--','-.']
-            linecycler=cycle(lines)
-            plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+'L='+str(sizes[L_index]))
+    for bias in bias_list:
 
-            #XYZ,ZYX,XZY,YXZ,YZX,ZXY
-            for code_name in code_names:
-                if code_name=='CSS':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='XY':
-                    bias_str='Y'
-                    num_realiz=1
-                    max_runs=20000
-                elif code_name=='XZZX':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='spiral_XZ':
-                    num_realiz=1
-                    bias_str='Z'
-                    max_runs=20000
-                elif code_name=='random_XZ_YZ':
-                    num_realiz=10
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/2,1/3,1/2-1/3,0,0,0]
-                elif code_name=='random_XZ_YZ2':
-                    num_realiz=10
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/3,1/3,1/3,0,0,0]
-                elif code_name=='random_all':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
-                elif code_name=='random_XZ':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/2,1/2,0,0,0,0]
-                elif code_name=='random_XY':
-                    num_realiz=30
-                    bias_str='Y'
-                    max_runs=2000
-                    perm_rates=[1/2,1/2,0,0,0,0]
-                elif code_name=='random_ZXY':
-                    num_realiz=30
-                    bias_str='Z'
-                    max_runs=2000
-                    perm_rates=[1/2,0,0,0,0,1/2]
+        chi_val=12
+        decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
+        codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+
+        # if bias==10:
+        #     code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
+        # else:
+        # code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
+        code_names=['random_XZ_YZ','random_XZ_YZ2']
+        code_names=['rotXY','rot_random_XZ_YZ']
+        # code_names=['random_XZ_YZ']
+
+        
+        #XYZ,ZYX,XZY,YXZ,YZX,ZXY
+        for code_name in code_names:
+            if code_name=='CSS':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=1
+                bias_str='Z'
+                max_runs=20000
+            elif code_name=='XY':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                bias_str='Y'
+                num_realiz=1
+                max_runs=20000
+            elif code_name=='rotXY':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Y'
+                num_realiz=1
+                max_runs=20000  
+            elif code_name=='rot_random_XZ_YZ':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Y'
+                num_realiz=30
+                max_runs=2000  
+                perm_rates=[1/4,1/4,1/2,0,0,0]                                               
+            elif code_name=='XZZX':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=1
+                bias_str='Z'
+                max_runs=20000
+            elif code_name=='spiral_XZ':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=1
+                bias_str='Z'
+                max_runs=20000
+            elif code_name=='random_XZ_YZ':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=10
+                bias_str='Z'
+                max_runs=2000
+                perm_rates=[1/2,1/3,1/2-1/3,0,0,0]
+            elif code_name=='random_XZ_YZ2':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=10
+                bias_str='Z'
+                max_runs=2000
+                perm_rates=[1/3,1/3,1/3,0,0,0]
+            elif code_name=='random_all':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=30
+                bias_str='Z'
+                max_runs=2000
+                perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
+            elif code_name=='random_XZ':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=30
+                bias_str='Z'
+                max_runs=2000
+                perm_rates=[1/2,1/2,0,0,0,0]
+            elif code_name=='random_XY':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                layout='planar'
+                num_realiz=30
+                bias_str='Y'
+                max_runs=2000
+                perm_rates=[1/2,1/2,0,0,0,0]
+            elif code_name=='random_ZXY':    
+                layout='planar'
+                num_realiz=30
+                bias_str='Z'
+                max_runs=2000
+                perm_rates=[1/2,0,0,0,0,1/2]
                     
-                error_model = BiasedDepolarizingErrorModel(bias,bias_str)
-                # bias=1/bias
-                # error_model=BiasedYXErrorModel(bias)
-                chi_val=12
-                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
-               
-                # print run parameters
-                print('code_name:',code_name)
-                print('codes_and_size:',[code.label for code in codes_and_size])
-                print('Error model:',error_model.label)
-                print('Decoder:',decoder.label)
-                print('Error probabilities:',error_probabilities)
-                print('Maximum runs:',max_runs)
-               
-                [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
+            error_model = BiasedDepolarizingErrorModel(bias,bias_str)
+            # bias=1/bias
+            # error_model=BiasedYXErrorModel(bias)
+            # print run parameters
+            print('code_name:',code_name)
+            print('codes_and_size:',[code.label for code in codes_and_size])
+            print('Error model:',error_model.label)
+            print('Decoder:',decoder.label)
+            print('Error probabilities:',error_probabilities)
+            print('Maximum runs:',max_runs)
+
+            for L_index,code in enumerate(codes_and_size): 
+                from itertools import cycle
+                plt.figure(figsize=(20,10))
+                lines=['-',':','--','-.']
+                linecycler=cycle(lines)
+                plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+'L='+str(sizes[L_index])+' chi='+str(chi_val))
+
+                [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
 
                 np.savetxt(dirname+'/p_list'+code_name+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
                 np.savetxt(dirname+'/pL_list'+code_name+str(bias)[:7]+'.csv',pL_list,delimiter=',')
