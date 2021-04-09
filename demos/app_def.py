@@ -15,63 +15,117 @@ from random import shuffle
 from qecsim.model import ErrorModel,cli_description
 from qecsim import paulitools as pt
 
-def deform_matsvecs(code,decoder,error_model,perm_rates,code_name):
-    seed_sequence = np.random.SeedSequence()
-    rng = np.random.default_rng(seed_sequence)    
-    
-    error = error_model.generate(code,0.3,rng)
-    syndrome = pt.bsp(error,code.stabilizers.T)
-    sample_pauli = decoder.sample_recovery(code,syndrome)
-    perm_mat_sample=np.zeros((2*sample_pauli.code.size[0] - 1,2*sample_pauli.code.size[1] - 1),dtype=int)
-    perm_mat=np.zeros(perm_mat_sample.shape,dtype=int)
-    n_qubits =code.n_k_d[0]
-    perm_vec=[]
+def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
 
-    if code_name[:6]=='random':
-        # print(perm_rates)
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==0 and col%2==0):
-                x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
-                perm_mat[row,col]=x[0]
-                perm_vec.append(perm_mat[row,col])
+    if layout=='planar'
+        seed_sequence = np.random.SeedSequence()
+        rng = np.random.default_rng(seed_sequence)    
+        
+        error = error_model.generate(code,0.3,rng)
+        syndrome = pt.bsp(error,code.stabilizers.T)
+        sample_pauli = decoder.sample_recovery(code,syndrome)
+        perm_mat_sample=np.zeros((2*sample_pauli.code.size[0] - 1,2*sample_pauli.code.size[1] - 1),dtype=int)
+        perm_mat=np.zeros(perm_mat_sample.shape,dtype=int)
+        n_qubits =code.n_k_d[0]
+        perm_vec=[]
+        if code_name[:6]=='random':
+            # print(perm_rates)
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==0 and col%2==0):
+                    x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
+                    perm_mat[row,col]=x[0]
+                    perm_vec.append(perm_mat[row,col])
 
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==1 and col%2==1):
-                x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
-                perm_mat[row,col]=x[0]
-                perm_vec.append(perm_mat[row,col])
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==1 and col%2==1):
+                    x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
+                    perm_mat[row,col]=x[0]
+                    perm_vec.append(perm_mat[row,col])
 
-    elif code_name=='XZZX':
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==0 and col%2==0):
-                perm_mat[row,col]=1
-                perm_vec.append(perm_mat[row,col])
-
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==1 and col%2==1):
-                perm_vec.append(perm_mat[row,col])
-
-    elif code_name[:6]=='spiral':
-        d=perm_mat.shape[0]
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==0 and col%2==0):
-                if (row ==0 and col in range(0,d,4)) or (row==d-1 and col in range(2,d-1,4)) or (row%2==1 and col%2==1):
+        elif code_name=='XZZX':
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==0 and col%2==0):
                     perm_mat[row,col]=1
-                perm_vec.append(perm_mat[row,col])
+                    perm_vec.append(perm_mat[row,col])
 
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==1 and col%2==1):
-                if (row ==0 and col in range(0,d,4)) or (row==d-1 and col in range(2,d-1,4)) or (row%2==1 and col%2==1):
-                    perm_mat[row,col]=1
-                perm_vec.append(perm_mat[row,col])
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==1 and col%2==1):
+                    perm_vec.append(perm_mat[row,col])
 
-    elif code_name=='CSS' or code_name=='XY':
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==0 and col%2==0):
-                perm_vec.append(perm_mat[row,col])
-        for row,col in np.ndindex(perm_mat.shape):
-            if (row%2==1 and col%2==1):
-                perm_vec.append(perm_mat[row,col])
+        elif code_name[:6]=='spiral':
+            d=perm_mat.shape[0]
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==0 and col%2==0):
+                    if (row ==0 and col in range(0,d,4)) or (row==d-1 and col in range(2,d-1,4)) or (row%2==1 and col%2==1):
+                        perm_mat[row,col]=1
+                    perm_vec.append(perm_mat[row,col])
+
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==1 and col%2==1):
+                    if (row ==0 and col in range(0,d,4)) or (row==d-1 and col in range(2,d-1,4)) or (row%2==1 and col%2==1):
+                        perm_mat[row,col]=1
+                    perm_vec.append(perm_mat[row,col])
+
+        elif code_name=='CSS' or code_name=='XY':
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==0 and col%2==0):
+                    perm_vec.append(perm_mat[row,col])
+            for row,col in np.ndindex(perm_mat.shape):
+                if (row%2==1 and col%2==1):
+                    perm_vec.append(perm_mat[row,col])
+
+    elif layout=='rotated':
+
+        size=code.site_bounds
+        perm_mat=np.zeros((size,size))
+        nrows, ncols=perm_mat.shape
+        perm_vec=np.zeros(np.prod((nrows,ncols)))
+        
+        if code_name[:6]=='random':
+            # print(perm_rates)
+            for col, row in np.ndindex(nrows,ncols):
+                if (row+col)%2==0:
+                    x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
+                    perm_mat[col,row]=x[0]
+
+            perm_vec=np.zeros(np.prod((nrows,ncols)))
+            for col, row in np.ndindex(nrows,ncols):
+                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+
+        elif code_name=='XZZX':
+            for col, row in np.ndindex(nrows,ncols):
+                if (row+col)%2==0:
+                    perm_mat[col,row]=1
+
+            perm_vec=np.zeros(np.prod((nrows,ncols)))
+            for col, row in np.ndindex(nrows,ncols):
+                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+
+        elif code_name[:6]=='spiral':
+            for col, row in np.ndindex(perm_mat.shape):
+                if row%2==0:
+                    if row%4==0:
+                        perm_mat[row,range(0,ncols-1)]=1
+                    else:
+                        perm_mat[row,range(1,ncols)]=1
+                else:
+                    if row%4==1:
+                        perm_mat[row,ncols-1]=1
+                    elif row%4==3:
+                        perm_mat[row,0]=1
+
+            perm_vec=np.zeros(np.prod((nrows,ncols)))
+            for col, row in np.ndindex(nrows,ncols):
+                perm_vec[(col+row*ncols)]=perm_mat[col,row]
+
+        elif code_name=='CSS' or code_name=='XY':
+            for col, row in np.ndindex(nrows,ncols):
+                if (row+col)%2==0:
+                    perm_mat[col,row]=0
+
+            perm_vec=np.zeros(np.prod((nrows,ncols)))
+            for col, row in np.ndindex(nrows,ncols):
+                perm_vec[(col+row*ncols)]=perm_mat[col,row]
 
     return perm_mat,perm_vec
 
@@ -121,21 +175,21 @@ def permute_error_Pauli(error_Pauli,perm_vec):
 
 logger = logging.getLogger(__name__)
 
-def run_once_def(code,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,rng=None):
+def run_once_def(code,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,layout,rng=None):
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0,1].')
     # defaults
     rng = np.random.default_rng() if rng is None else rng
 
-    return _run_once_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,0.0,rng)
+    return _run_once_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,layout,0.0,rng)
 
-def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,measurement_error_probability,rng):
+def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,layout,measurement_error_probability,rng):
     """Implements run_once and run_once_ftp functions"""
     # assumptions
     assert (mode == 'ideal' and time_steps == 1) or mode == 'ftp'
     if code_name[:6]=='random':
-        perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name)
+        perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout)
 
     # generate step_error,step_syndrome and step_measurement_error for each time step
     n_qubits = code.n_k_d[0]
@@ -241,7 +295,7 @@ def _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,per
     return data
 
 
-def _run_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,code_name,measurement_error_probability,
+def _run_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,code_name,layout,measurement_error_probability,
          max_runs=None,max_failures=None,random_seed=None):
     """Implements run and run_ftp functions"""
 
@@ -291,12 +345,12 @@ def _run_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rat
     error_weights = []  # list of error_weight from current run
     success_list = np.zeros(max_runs)
 
-    perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name)
+    perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout)
 
     while ((max_runs is None or runs_data['n_run'] < max_runs)
            and (max_failures is None or runs_data['n_fail'] < max_failures)):
         # run simulation
-        data = _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,
+        data = _run_once_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rates,perm_mat,perm_vec,code_name,layout,
                          measurement_error_probability,rng)
         # increment run counts
         success_list[runs_data['n_run']]=data['success']
@@ -346,7 +400,7 @@ def _run_def(mode,code,time_steps,error_model,decoder,error_probability,perm_rat
     return [runs_data['logical_failure_rate'],runs_data['logical_failure_rate_errorbar']]
 
 
-def run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_runs=None,max_failures=None,random_seed=None):
+def run_def(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs=None,max_failures=None,random_seed=None):
     """
     Execute stabilizer code error-decode-recovery (ideal) simulation many times and return aggregated runs data.
 
@@ -406,7 +460,7 @@ def run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0,1].')
-    return _run_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,code_name,0.0,max_runs,max_failures,random_seed)
+    return _run_def('ideal',code,1,error_model,decoder,error_probability,perm_rates,code_name,layout,0.0,max_runs,max_failures,random_seed)
 
 
 def _add_rate_statistics(runs_data):

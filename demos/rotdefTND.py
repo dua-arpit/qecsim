@@ -28,9 +28,9 @@ def random_coords(dims, nsamp):
     return np.vstack(np.unravel_index(idx, dims)).T
 
 
-def parallel_step_p(code,hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec,error_model, decoder, max_runs, error_probability):
-    hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec= deform_matsvecs(code,decoder,error_model)
-    result= app_def.run_def(code,hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec, error_model, decoder, error_probability, max_runs)
+def parallel_step_p(code,perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec,error_model, decoder, max_runs, error_probability):
+    perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
+    result= app_def.run_def(code,perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec, error_model, decoder, error_probability, max_runs)
     return result
 
 def square(a):
@@ -40,7 +40,7 @@ vsquare=np.vectorize(square)
 
 
 # set models
-sizes= range(6,11,2) #choose odd sizes since we have defined hadamard_mat for odd sizes
+sizes= range(6,11,2) #choose odd sizes since we have defined perm_mat for odd sizes
 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
 bias_list=[10000000000]
 biasstr_list=['Z']
@@ -65,34 +65,34 @@ error_probabilities = np.linspace(error_probability_min, error_probability_max, 
 
 def deform_matsvecs(code,decoder,error_model):
 
-    hadamard_mat=np.zeros((sizes[code_index],sizes[code_index]))
-    XYperm_mat,ZYperm_mat=hadamard_mat,hadamard_mat
-    nrows, ncols=hadamard_mat.shape
-    hadamard_vec=np.zeros(np.prod((nrows,ncols)))
+    perm_mat=np.zeros((sizes[code_index],sizes[code_index]))
+    perm_mat,perm_mat=perm_mat,perm_mat
+    nrows, ncols=perm_mat.shape
+    perm_vec=np.zeros(np.prod((nrows,ncols)))
 
     for col, row in np.ndindex(nrows,ncols):
         if(np.random.rand(1,1))<pH:
-            hadamard_mat[col,row]=1
+            perm_mat[col,row]=1
 
     for col,row in np.ndindex(nrows,ncols):
-        hadamard_vec[(col+row*ncols)]=hadamard_mat[col,row]
+        perm_vec[(col+row*ncols)]=perm_mat[col,row]
 
-    XYperm_vec=np.zeros(np.prod((nrows,ncols)))
+    perm_vec=np.zeros(np.prod((nrows,ncols)))
     for col, row in np.ndindex(nrows,ncols):
         if(np.random.rand(1,1))<pXY:
-            XYperm_mat[col,row]=1
+            perm_mat[col,row]=1
 
     for col, row in np.ndindex(nrows,ncols):
-        XYperm_vec[(col+row*ncols)]=XYperm_mat[col,row]
+        perm_vec[(col+row*ncols)]=perm_mat[col,row]
 
-    ZYperm_vec=np.zeros(np.prod((nrows,ncols)))
+    perm_vec=np.zeros(np.prod((nrows,ncols)))
     for col, row in np.ndindex(nrows,ncols):
         if(np.random.rand(1,1))<pZY:
-            ZYperm_mat[col,row]=1
+            perm_mat[col,row]=1
 
     for col, row in np.ndindex(nrows,ncols):
-        ZYperm_vec[(col+row*ncols)]=ZYperm_mat[col,row]
-    return hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec
+        perm_vec[(col+row*ncols)]=perm_mat[col,row]
+    return perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec
 
 
 
@@ -148,10 +148,10 @@ for biasstr in biasstr_list:
 
                 for realization_index in range(realizations):
 
-                    hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec= deform_matsvecs(code,decoder,error_model)
+                    perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
 
                     p=mp.Pool()
-                    func=partial(parallel_step_p,code,hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec,error_model, decoder, max_runs)
+                    func=partial(parallel_step_p,code,perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec,error_model, decoder, max_runs)
                     result=p.map(func, error_probabilities)
                     #print(result)
                     p.close()
@@ -171,81 +171,51 @@ for biasstr in biasstr_list:
                 if code_name=="XZZX":
                     max_runs =1000
 
-                    pXY, pZY=0,0
-                    nrows, ncols=hadamard_mat.shape
+                    nrows, ncols=perm_mat.shape
 
                     for col, row in np.ndindex(nrows,ncols):
                         if (row+col)%2==0:
-                            hadamard_mat[col,row]=1
+                            perm_mat[col,row]=1
 
-                    hadamard_vec=np.zeros(np.prod((nrows,ncols)))
+                    perm_vec=np.zeros(np.prod((nrows,ncols)))
                     for col, row in np.ndindex(nrows,ncols):
-                        hadamard_vec[(col+row*ncols)]=hadamard_mat[col,row]
+                        perm_vec[(col+row*ncols)]=perm_mat[col,row]
                     
-                    # for i in range(np.prod(hadamard_mat.shape)):
+                    # for i in range(np.prod(perm_mat.shape)):
                     #     if i%2==0:
-                    #         hadamard_vec[i]=1
-
-                    rand_XY_coords= random_coords(XYperm_mat.shape,round(np.prod(XYperm_mat.shape)*pXY))
-                    for col, row in rand_XY_coords:
-                        XYperm_mat[col,row]=0
-                    XYperm_vec=np.zeros(np.prod(XYperm_mat.shape))
-                    for i,j in np.ndindex(XYperm_mat.shape):
-                        XYperm_vec[(i+j*XYperm_mat.shape[1])]=XYperm_mat[i,j]
-
-                    rand_ZY_coords= random_coords(ZYperm_mat.shape,round(np.prod(ZYperm_mat.shape)*pZY))
-                    for col, row in rand_ZY_coords:
-                        ZYperm_mat[col,row]=0
-                    ZYperm_vec=np.zeros(np.prod(ZYperm_mat.shape))
-                    for i,j in np.ndindex(ZYperm_mat.shape):
-                        ZYperm_vec[(i+j*ZYperm_mat.shape[1])]=ZYperm_mat[i,j]
+                    #         perm_vec[i]=1
 
 
                 if code_name=="optimal": #for odd dy
                     max_runs =2000
                     pXY, pZY=0,0
 
-                    nrows, ncols=hadamard_mat.shape
+                    nrows, ncols=perm_mat.shape
 
-                    for col, row in np.ndindex(hadamard_mat.shape):
+                    for col, row in np.ndindex(perm_mat.shape):
                         if row%2==0:
                             if row%4==0:
-                                hadamard_mat[row,range(0,ncols-1)]=1
+                                perm_mat[row,range(0,ncols-1)]=1
                             else:
-                                hadamard_mat[row,range(1,ncols)]=1
+                                perm_mat[row,range(1,ncols)]=1
                         else:
                             if row%4==1:
-                                hadamard_mat[row,ncols-1]=1
+                                perm_mat[row,ncols-1]=1
                             elif row%4==3:
-                                hadamard_mat[row,0]=1
+                                perm_mat[row,0]=1
 
-                    hadamard_vec=np.zeros(np.prod((nrows,ncols)))
+                    perm_vec=np.zeros(np.prod((nrows,ncols)))
                     for col, row in np.ndindex(nrows,ncols):
-                        hadamard_vec[(col+row*ncols)]=hadamard_mat[col,row]
+                        perm_vec[(col+row*ncols)]=perm_mat[col,row]
 
+                # perm_vec=np.zeros(np.prod(perm_mat.shape))
 
-                    rand_XY_coords= random_coords(XYperm_mat.shape,round(np.prod(XYperm_mat.shape)*pXY))
-                    for col, row in rand_XY_coords:
-                        XYperm_mat[col,row]=0
-                    XYperm_vec=np.zeros(np.prod(XYperm_mat.shape))
-                    for i,j in np.ndindex(XYperm_mat.shape):
-                        XYperm_vec[(i+j*XYperm_mat.shape[1])]=XYperm_mat[i,j]
-
-                    rand_ZY_coords= random_coords(ZYperm_mat.shape,round(np.prod(ZYperm_mat.shape)*pZY))
-                    for col, row in rand_ZY_coords:
-                        ZYperm_mat[col,row]=0
-                    ZYperm_vec=np.zeros(np.prod(ZYperm_mat.shape))
-                    for i,j in np.ndindex(ZYperm_mat.shape):
-                        ZYperm_vec[(i+j*ZYperm_mat.shape[1])]=ZYperm_mat[i,j]
-
-                # hadamard_vec=np.zeros(np.prod(hadamard_mat.shape))
-
-                # for i,j in np.ndindex(hadamard_mat.shape):
-                #     if hadamard_mat[i,j]==1:
-                #         hadamard_vec[(i+j*hadamard_mat.shape[1])]=1
+                # for i,j in np.ndindex(perm_mat.shape):
+                #     if perm_mat[i,j]==1:
+                #         perm_vec[(i+j*perm_mat.shape[1])]=1
 
                 p=mp.Pool()
-                func=partial(parallel_step_p,code,hadamard_mat,hadamard_vec,XYperm_mat,XYperm_vec,ZYperm_mat,ZYperm_vec,error_model, decoder, max_runs)
+                func=partial(parallel_step_p,code,perm_mat,perm_vec,perm_mat,perm_vec,perm_mat,perm_vec,error_model, decoder, max_runs)
                 result=p.map(func, error_probabilities)
                 print(result)
                 p.close()

@@ -108,10 +108,10 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(8,9,2)
+    sizes= range(6,7,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.1,0.45
-    error_probabilities=np.linspace(p_min,p_max,12)
+    error_probabilities=np.linspace(p_min,p_max,7)
 
     #export data
     timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
@@ -132,7 +132,8 @@ if __name__=='__main__':
     bias_str='Z'
     max_runs=500
     legends=[]
-    pXZ_list=[1/4,1/3,2/5,1/2]
+    pXZ_list=[0,1/4,1/3,2/5,1/2]
+    pYZ_list=[0,1/4,1/3,2/5,1/2]
 
     for L_index,code in enumerate(codes_and_size):
         for bias in bias_list:
@@ -146,6 +147,8 @@ if __name__=='__main__':
             for code_name in code_names:
                 for pXZ in pXZ_list:
                     for pYZ in pXZ_list:
+                        if (pXZ==0 and pYZ!=1/2) or (pYZ==0 and pXZ!=1/2):
+                            continue
                         perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]
 
                         error_model = BiasedDepolarizingErrorModel(bias,bias_str)

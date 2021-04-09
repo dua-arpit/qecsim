@@ -387,7 +387,7 @@ class RotatedPlanarMPSDecoder_def(Decoder):
             node = tt.tsr.delta(_shape(compass_direction))
             return node
 
-        def create_tn(self, prob_dist, hadamard_mat, sample_pauli):
+        def create_tn(self, prob_dist, hadamard_mat, sample_pauli,perm_mat,perm_vec):
             """Return a network (numpy.array 2d) of tensors (numpy.array 4d).
             Note: The network contracts to the coset probability of the given sample_pauli.
             """
@@ -415,8 +415,13 @@ class RotatedPlanarMPSDecoder_def(Decoder):
                 return direction
 
             
-            pi,px,py,pz=prob_dist
-            had_prob_dist= pi,pz,py,px
+            prob_dist_mat=[0,1,2,3,4,5]
+            prob_dist_mat[0]=pi,px,py,pz
+            prob_dist_mat[1]=pi,pz,py,px
+            prob_dist_mat[2]=pi,px,pz,py
+            prob_dist_mat[3]=pi,py,px,pz
+            prob_dist_mat[4]=pi,py,pz,px
+            prob_dist_mat[5]=pi,pz,px,py
 
             # extract code
             code = sample_pauli.code
@@ -433,15 +438,9 @@ class RotatedPlanarMPSDecoder_def(Decoder):
                     q_pauli = sample_pauli.operator(code_index)
                     if is_z_plaquette:
                         #print(code_index)
-                        if hadamard_mat[code_index]:
-                            q_node = self.create_h_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
-                        else:
-                            q_node = self.create_h_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        q_node = self.create_h_node(prob_dist_mat[perm_mat[row,col]], q_pauli, _compass_q_direction(code_index, code))
                     else:
-                        if hadamard_mat[code_index]:
-                            q_node = self.create_v_node(had_prob_dist, q_pauli, _compass_q_direction(code_index, code))
-                        else:
-                            q_node = self.create_v_node(prob_dist, q_pauli, _compass_q_direction(code_index, code))
+                        q_node = self.create_v_node(prob_dist_mat[perm_mat[row,col]], q_pauli, _compass_q_direction(code_index, code))
                     tn[q_node_index] = q_node
                 if code.is_in_plaquette_bounds(code_index):
                     s_node_index = _rotate_p_index(code_index, code)

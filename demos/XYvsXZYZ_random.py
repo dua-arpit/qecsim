@@ -108,7 +108,7 @@ if __name__=='__main__':
     layout_name="planar"
     bdry_name='surface'
 
-    sizes= range(10,11,2)
+    sizes= range(6,7,2)
     codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
     p_min,p_max=0.01,0.50
     error_probabilities=np.linspace(p_min,p_max,8)

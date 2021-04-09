@@ -19,12 +19,12 @@ from functools import partial
 
 
 
-def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,error_probability):
+def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability):
     # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
-    result= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_runs)
+    result= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
     return result
 
-def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities,realization_index):
+def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities,realization_index):
 
     pL_list=np.zeros((len(error_probabilities)))
     std_list=np.zeros((len(error_probabilities)))  
@@ -32,11 +32,11 @@ def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,er
     # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
     for error_probability_index,error_probability in enumerate(error_probabilities):
         # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
-        [pL_list[error_probability_index],std_list[error_probability_index]]= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,max_runs)
+        [pL_list[error_probability_index],std_list[error_probability_index]]= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
 
     return [pL_list,std_list]
 
-def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz):
+def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):
     pL_list_realiz=np.zeros((num_realiz,len(error_probabilities)))
     std_list_realiz=np.zeros((num_realiz,len(error_probabilities)))      
     
@@ -48,7 +48,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
     if code_name[:6]=='random':
         print(perm_rates)
         p=mp.Pool()
-        func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,error_probabilities)
+        func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities)
         result=p.map(func,range(num_realiz))
         #print(result)
         p.close()
@@ -67,7 +67,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
 
     else:
         p=mp.Pool()
-        func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
+        func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name,layout)
         result=p.map(func,error_probabilities)
         print(result)
         p.close()
@@ -81,7 +81,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
 
         # for realization_index in range(num_realiz):
         #     p=mp.Pool()
-        #     func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
+        #     func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name,layout)
         #     result=p.map(func,error_probabilities)
         #     print(result)
         #     p.close()
@@ -106,7 +106,7 @@ if __name__=='__main__':
     def square(a):
         return a**2
     vsquare=np.vectorize(square)
-    layout_name="planar"
+    layout='planar'
     bdry_name='surface'
 
     sizes= range(6,7,2)
@@ -115,9 +115,9 @@ if __name__=='__main__':
     error_probabilities=np.linspace(p_min,p_max,6)
 
     #export data
-    timestr=time.strftime("%Y%m%d-%H%M%S")   #record current date and time
+    timestr=time.strftime('%Y%m%d-%H%M%S')   #record current date and time
     import os
-    dirname="./data/"+'all_codes'+timestr
+    dirname='./data/'+'all_codes'+timestr
     os.mkdir(dirname)    #make a new directory with current date and time  
 
     # code_names=['spiral_XZ','random_XZ','random_XZ_YZ','random_XY']
@@ -140,7 +140,7 @@ if __name__=='__main__':
             # code_names=['random_XZ_YZ']
             from itertools import cycle
             plt.figure(figsize=(20,10))
-            lines=["-",":","--","-."]
+            lines=['-',':','--','-.']
             linecycler=cycle(lines)
             plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+layout_name+' '+bdry_name+'L='+str(sizes[L_index]))
 
@@ -209,15 +209,15 @@ if __name__=='__main__':
                
                 [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,num_realiz)
 
-                np.savetxt(dirname+"/p_list"+code_name+str(bias)[:7]+".csv",error_probabilities,delimiter=",")
-                np.savetxt(dirname+"/pL_list"+code_name+str(bias)[:7]+".csv",pL_list,delimiter=",")
-                np.savetxt(dirname+"/std_list"+code_name+str(bias)[:7]+".csv",std_list,delimiter=",")
+                np.savetxt(dirname+'/p_list'+code_name+str(bias)[:7]+'.csv',error_probabilities,delimiter=',')
+                np.savetxt(dirname+'/pL_list'+code_name+str(bias)[:7]+'.csv',pL_list,delimiter=',')
+                np.savetxt(dirname+'/std_list'+code_name+str(bias)[:7]+'.csv',std_list,delimiter=',')
 
                 plt.errorbar(-np.log(error_probabilities),log_pL_list,log_std_list)
 
             plt.xlabel('-log(p)')
             plt.ylabel('$-log(p_L)$')
             plt.legend(code_names) 
-            plt.savefig(dirname+"/scaling_code_comparison_bias="+str(bias)[:7]+".pdf")
+            plt.savefig(dirname+'/scaling_code_comparison_bias='+str(bias)[:7]+'.pdf')
 
 
