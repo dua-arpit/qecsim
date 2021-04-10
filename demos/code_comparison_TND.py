@@ -129,7 +129,7 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
-    bias_list=[30,50,70,150]
+    bias_list=[100,10]
 
     perm_rates=[1,0,0,0,0,0]
 
@@ -146,6 +146,7 @@ if __name__=='__main__':
         code_names=['random_XZ_YZ','random_XZ_YZ2']
         code_names=['random_rot_XZ_YZ','rotXY']
         # code_names=['random_XZ_YZ0']
+        code_names=['random_rot_XY_ZY','random_rot_XZ']
         from itertools import cycle
         plt.figure(figsize=(20,10))
         lines=['-',':','--','-.']
@@ -191,9 +192,25 @@ if __name__=='__main__':
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
-                num_realiz=30
+                num_realiz=20
                 max_runs=2000  
                 perm_rates=[1/4,1/4,1/2,0,0,0]  
+            elif code_name=='random_rot_XY_ZY':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Y'
+                num_realiz=20
+                max_runs=2000  
+                perm_rates=[1/4,1/4,1/2,0,0,0]  
+            elif code_name=='random_rot_XZ':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Z'
+                num_realiz=30
+                max_runs=2000   
+                perm_rates=[1/2,1/2,0,0,0,0]  
             elif code_name=='random_rot_XZ_YZ0':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
