@@ -115,7 +115,9 @@ if __name__=='__main__':
 
     bias_list=[100]
 
-    code_names=['XY','random_XZ_YZ4','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
+    code_names=['XY','random_XZ_YZ4','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0','rotXY']
+    
+    code_names=['random_rot_XZ_YZ0','random_rot_XZ_YZ','rotXZ','rotXY']
 
     perm_rates=[1,0,0,0,0,0]
     chival=13

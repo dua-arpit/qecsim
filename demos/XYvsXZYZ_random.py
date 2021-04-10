@@ -66,7 +66,7 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
 
     else:
         p=mp.Pool()
-        func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name)
+        func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name,layout)
         result=p.map(func,error_probabilities)
         print(result)
         p.close()
@@ -126,8 +126,10 @@ if __name__=='__main__':
 
     bias_list=[10,100,1000,10**300]
 
-    # code_names=['XY','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
-    code_names=['random_XZ_YZ4']
+    bias_list=[30,50,70]
+    code_names=['XY','random_XZ_YZ4','random_XZ_YZ3','random_XZ_YZ2','random_XZ_YZ1','random_XZ_YZ0']
+
+    # code_names=['random_XZ_YZ4']
 
     perm_rates=[1,0,0,0,0,0]
 

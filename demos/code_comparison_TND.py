@@ -113,8 +113,9 @@ if __name__=='__main__':
     bdry_name='surface'
 
     sizes= range(6,7,2)
+    rotsizes= range(7,8,2)
     p_min,p_max=0.01,0.50
-    error_probabilities=np.linspace(p_min,p_max,6)
+    error_probabilities=np.linspace(p_min,p_max,10)
 
     #export data
     timestr=time.strftime('%Y%m%d-%H%M%S')   #record current date and time
@@ -128,7 +129,7 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
-    bias_list=[100]
+    bias_list=[30,50,70,150]
 
     perm_rates=[1,0,0,0,0,0]
 
@@ -143,9 +144,12 @@ if __name__=='__main__':
         # else:
         # code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
         code_names=['random_XZ_YZ','random_XZ_YZ2']
-        code_names=['rotXY','rot_random_XZ_YZ']
-        # code_names=['random_XZ_YZ']
-
+        code_names=['random_rot_XZ_YZ','rotXY']
+        # code_names=['random_XZ_YZ0']
+        from itertools import cycle
+        plt.figure(figsize=(20,10))
+        lines=['-',':','--','-.']
+        linecycler=cycle(lines)
         
         #XYZ,ZYX,XZY,YXZ,YZX,ZXY
         for code_name in code_names:
@@ -162,20 +166,42 @@ if __name__=='__main__':
                 num_realiz=1
                 max_runs=20000
             elif code_name=='rotXY':    
-                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Y'
+                num_realiz=1
+                max_runs=10000  
+            elif code_name=='rot_spiral':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
                 bias_str='Y'
                 num_realiz=1
                 max_runs=20000  
-            elif code_name=='rot_random_XZ_YZ':    
-                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in sizes]
+            elif code_name=='rotXZ':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
-                bias_str='Y'
+                bias_str='Z'
+                num_realiz=1
+                max_runs=10000  
+            elif code_name=='random_rot_XZ_YZ':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Z'
                 num_realiz=30
                 max_runs=2000  
-                perm_rates=[1/4,1/4,1/2,0,0,0]                                               
+                perm_rates=[1/4,1/4,1/2,0,0,0]  
+            elif code_name=='random_rot_XZ_YZ0':    
+                codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
+                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                layout='rotated'
+                bias_str='Z'
+                num_realiz=30
+                max_runs=2000  
+                perm_rates=[1/4,1/3,1/3,0,0,0]                                                           
             elif code_name=='XZZX':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
                 layout='planar'
@@ -237,16 +263,13 @@ if __name__=='__main__':
             print('code_name:',code_name)
             print('codes_and_size:',[code.label for code in codes_and_size])
             print('Error model:',error_model.label)
+            print('number of realizations:',num_realiz)
             print('Decoder:',decoder.label)
             print('Error probabilities:',error_probabilities)
             print('Maximum runs:',max_runs)
 
             for L_index,code in enumerate(codes_and_size): 
-                from itertools import cycle
-                plt.figure(figsize=(20,10))
-                lines=['-',':','--','-.']
-                linecycler=cycle(lines)
-                plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' for '+'L='+str(sizes[L_index])+' chi='+str(chi_val))
+                plt.title('TND failure rate scaling comparison at bias='+str(bias)[:7]+' ,chi='+str(chi_val)+', L_rot='+str(rotsizes[L_index])+' ,L_pl='+str(sizes[L_index]))
 
                 [pL_list,std_list,log_pL_list,log_std_list]=TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
 

@@ -16,11 +16,12 @@ from qecsim.model import ErrorModel,cli_description
 from qecsim import paulitools as pt
 
 def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
+        
+    seed_sequence = np.random.SeedSequence()
+    rng = np.random.default_rng(seed_sequence) 
 
     if layout=='planar':
-        seed_sequence = np.random.SeedSequence()
-        rng = np.random.default_rng(seed_sequence)    
-        
+      
         error = error_model.generate(code,0.3,rng)
         syndrome = pt.bsp(error,code.stabilizers.T)
         sample_pauli = decoder.sample_recovery(code,syndrome)
@@ -83,15 +84,11 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
         if code_name[:6]=='random':
             # print(perm_rates)
             for row,col in np.ndindex(nrows,ncols):
-                if (row+col)%2==0:
-                    x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
-                    perm_mat[row,col]=x[0]
-
-            perm_vec=np.zeros(np.prod((nrows,ncols)))
-            for row,col in np.ndindex(nrows,ncols):
+                x=rng.choice((0,1,2,3,4,5),size=1,p=perm_rates) 
+                perm_mat[row,col]=x[0]
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
-        elif code_name=='XZZX':
+        elif code_name=='rot_XZZX':
             for row,col in np.ndindex(nrows,ncols):
                 if (row+col)%2==0:
                     perm_mat[row,col]=1
@@ -100,7 +97,7 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
             for row,col in np.ndindex(nrows,ncols):
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
-        elif code_name[:6]=='spiral':
+        elif code_name[:6]=='rot_spiral':
             for row,col in np.ndindex(nrows,ncols):
                 if row%2==0:
                     if row%4==0:
@@ -117,13 +114,9 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
             for row,col in np.ndindex(nrows,ncols):
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
-        elif code_name=='CSS' or code_name=='XY':
+        elif code_name=='rotXZ' or code_name=='rotXY':
             for row,col in np.ndindex(nrows,ncols):
-                if (row+col)%2==0:
-                    perm_mat[col,row]=0
-
-            perm_vec=np.zeros(np.prod((nrows,ncols)))
-            for col, row in np.ndindex(nrows,ncols):
+                perm_mat[col,row]=0
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
     return perm_mat,perm_vec

@@ -132,6 +132,8 @@ class RotatedPlanarMPSDecoder_def(Decoder):
         self._tol = tol
         self._tnc = self.TNC()
 
+
+
     @classmethod
     def sample_recovery(cls,code,syndrome):
         """
