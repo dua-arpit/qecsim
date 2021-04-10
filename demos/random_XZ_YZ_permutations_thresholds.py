@@ -132,8 +132,8 @@ if __name__=='__main__':
     bias_str='Z'
     max_runs=500
     legends=[]
-    pXZ_list=[2/5,1/2]
-    pYZ_list=[1/4,1/3,2/5,1/2]
+    pXZ_list=[0,1/4,1/3,2/5,1/2]
+    pYZ_list=[0,1/4,1/3,2/5,1/2]
 
 
     for bias in bias_list:
@@ -141,7 +141,9 @@ if __name__=='__main__':
         #XYZ,ZYX,XZY,YXZ,YZX,ZXY
         for pXZ in pXZ_list:
             for pYZ in pYZ_list:
-                perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]
+                if (pXZ==0 and pYZ!=1/2) or (pYZ==0 and pXZ!=1/2):
+                    continue
+                perm_rates=[1-pXZ-pYZ,pXZ,pYZ,0,0,0]                
 
                 error_model = BiasedDepolarizingErrorModel(bias,bias_str)
                 # bias=1/bias
