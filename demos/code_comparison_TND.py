@@ -113,9 +113,9 @@ if __name__=='__main__':
     bdry_name='surface'
 
     sizes= range(6,7,2)
-    rotsizes= range(7,8,2)
+    rotsizes= range(13,14,2)
     p_min,p_max=0.01,0.50
-    error_probabilities=np.linspace(p_min,p_max,10)
+    error_probabilities=np.linspace(p_min,p_max,5)
 
     #export data
     timestr=time.strftime('%Y%m%d-%H%M%S')   #record current date and time
@@ -129,15 +129,15 @@ if __name__=='__main__':
     # code_names=['XY','CSS']
 
     bias_list=[10,100,300,1000,10**300]
-    bias_list=[100,10]
+    bias_list=[50,200]
 
     perm_rates=[1,0,0,0,0,0]
 
     for bias in bias_list:
 
         chi_val=12
-        decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
-        codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+        # decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
+        # codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 
         # if bias==10:
         #     code_names=['CSS','XY','XZZX','spiral_XZ','random_XY','random_XZ','random_ZXY','random_XZ_YZ','random_all']
@@ -146,7 +146,7 @@ if __name__=='__main__':
         code_names=['random_XZ_YZ','random_XZ_YZ2']
         code_names=['random_rot_XZ_YZ','rotXY']
         # code_names=['random_XZ_YZ0']
-        code_names=['random_rot_XY_ZY','random_rot_XZ']
+        # code_names=['random_rot_XY_ZY','random_rot_XZ']
         from itertools import cycle
         plt.figure(figsize=(20,10))
         lines=['-',':','--','-.']
@@ -192,7 +192,7 @@ if __name__=='__main__':
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
-                num_realiz=20
+                num_realiz=30
                 max_runs=2000  
                 perm_rates=[1/4,1/4,1/2,0,0,0]  
             elif code_name=='random_rot_XY_ZY':    
@@ -208,7 +208,7 @@ if __name__=='__main__':
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
-                num_realiz=30
+                num_realiz=20
                 max_runs=2000   
                 perm_rates=[1/2,1/2,0,0,0,0]  
             elif code_name=='random_rot_XZ_YZ0':    
