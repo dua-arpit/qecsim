@@ -114,8 +114,8 @@ if __name__=='__main__':
 
     sizes= range(6,7,2)
     rotsizes= range(13,14,2)
-    p_min,p_max=0.01,0.50
-    error_probabilities=np.linspace(p_min,p_max,20)
+    p_min,p_max=0.05,0.50
+    error_probabilities=np.linspace(p_min,p_max,50)
 
     #export data
     timestr=time.strftime('%Y%m%d-%H%M%S')   #record current date and time
@@ -136,7 +136,6 @@ if __name__=='__main__':
     for bias in bias_list:
 
         chi_val=12
-        # decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
         # codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 
         # if bias==10:
@@ -154,12 +153,14 @@ if __name__=='__main__':
         for code_name in code_names:
             if code_name=='CSS':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=1
                 bias_str='Z'
                 max_runs=20000
             elif code_name=='XY':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 bias_str='Y'
                 num_realiz=1
@@ -198,8 +199,8 @@ if __name__=='__main__':
                 decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
-                num_realiz=40
-                max_runs=1500  
+                num_realiz=100
+                max_runs=1000  
                 perm_rates=[1/4,1/4,1/2,0,0,0]  
             elif code_name=='random_rot_XY_ZY':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
@@ -224,21 +225,24 @@ if __name__=='__main__':
                 bias_str='Z'
                 num_realiz=30
                 max_runs=2000  
-                perm_rates=[1/4,1/3,1/3,0,0,0]                                                           
+                perm_rates=[1/3,1/3,1/3,0,0,0]                                                           
             elif code_name=='XZZX':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=1
                 bias_str='Z'
                 max_runs=20000
             elif code_name=='spiral_XZ':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=1
                 bias_str='Z'
                 max_runs=20000
             elif code_name=='random_XZ_YZ':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=10
                 bias_str='Z'
@@ -246,6 +250,7 @@ if __name__=='__main__':
                 perm_rates=[1/2,1/3,1/2-1/3,0,0,0]
             elif code_name=='random_XZ_YZ2':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=10
                 bias_str='Z'
@@ -253,6 +258,7 @@ if __name__=='__main__':
                 perm_rates=[1/3,1/3,1/3,0,0,0]
             elif code_name=='random_all':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=30
                 bias_str='Z'
@@ -260,6 +266,7 @@ if __name__=='__main__':
                 perm_rates=[1/6,1/6,1/6,1/6,1/6,1/6]                    
             elif code_name=='random_XZ':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=30
                 bias_str='Z'
@@ -267,12 +274,15 @@ if __name__=='__main__':
                 perm_rates=[1/2,1/2,0,0,0,0]
             elif code_name=='random_XY':    
                 codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=30
                 bias_str='Y'
                 max_runs=2000
                 perm_rates=[1/2,1/2,0,0,0,0]
             elif code_name=='random_ZXY':    
+                codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
+                decoder = _planarmpsdecoder_def.PlanarMPSDecoder_def(chi=chi_val)
                 layout='planar'
                 num_realiz=30
                 bias_str='Z'
