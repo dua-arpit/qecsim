@@ -11,12 +11,19 @@ from qecsim.models.rotatedplanar import RotatedPlanarCode, RotatedPlanarMPSDecod
 
 # from _planarmpsdecoder_def import PlanarMPSDecoder_def
 import app_def
+import app_defp
 import _planarmpsdecoder_def
+import _planarmpsdecoder_defp
 import _rotatedplanarmpsdecoder_def
+import _rotatedplanarmpsdecoder_defp
 import importlib as imp
 imp.reload(app_def)
+imp.reload(app_defp)
 imp.reload(_planarmpsdecoder_def)
+imp.reload(_planarmpsdecoder_defp)
 imp.reload(_rotatedplanarmpsdecoder_def)
+imp.reload(_rotatedplanarmpsdecoder_defp)
+
 import os,time
 import multiprocessing as mp
 from functools import partial
@@ -25,7 +32,7 @@ from functools import partial
 
 def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability):
     # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
-    result= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
+    result= app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
     return result
 
 def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities,realization_index):
@@ -36,7 +43,7 @@ def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,la
     # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
     for error_probability_index,error_probability in enumerate(error_probabilities):
         # perm_mat,perm_vec= deform_matsvecs(code,decoder,error_model)
-        [pL_list[error_probability_index],std_list[error_probability_index]]= app_def.run_def(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
+        [pL_list[error_probability_index],std_list[error_probability_index]]= app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
 
     return [pL_list,std_list]
 
@@ -136,6 +143,10 @@ if __name__=='__main__':
     for bias in bias_list:
 
         chi_val=12
+<<<<<<< Updated upstream
+=======
+        # decoder = _planarmpsdecoder_defp.PlanarMPSDecoder_defp(chi=chi_val)
+>>>>>>> Stashed changes
         # codes_and_size = [PlanarCode(*(size,size)) for size in sizes]
 
         # if bias==10:
@@ -143,6 +154,10 @@ if __name__=='__main__':
         # else:
         # code_names=['CSS','XY','XZZX','spiral_XZ','random_XZ','random_XZ_YZ']
         # code_names=['random_XZ_YZ','random_XZ_YZ2']
+<<<<<<< Updated upstream
+=======
+        code_names=['random_rot_XZ_YZ','rotXY']
+>>>>>>> Stashed changes
         # code_names=['random_XZ_YZ0']
         code_names=['random_rot_XZ_YZ']
         from itertools import cycle
@@ -167,21 +182,21 @@ if __name__=='__main__':
                 max_runs=20000
             elif code_name=='rotXY':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Y'
                 num_realiz=1
                 max_runs=20000  
             elif code_name=='rot_spiral':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Y'
                 num_realiz=1
                 max_runs=20000  
             elif code_name=='rotXZ':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
                 num_realiz=1
@@ -196,7 +211,7 @@ if __name__=='__main__':
                 perm_rates=[1/2,1/2,0,0,0,0]                  
             elif code_name=='random_rot_XZ_YZ':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
                 num_realiz=100
@@ -204,7 +219,7 @@ if __name__=='__main__':
                 perm_rates=[1/4,1/4,1/2,0,0,0]  
             elif code_name=='random_rot_XY_ZY':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Y'
                 num_realiz=20
@@ -212,7 +227,7 @@ if __name__=='__main__':
                 perm_rates=[1/4,1/4,1/2,0,0,0]  
             elif code_name=='random_rot_XZ':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
                 num_realiz=20
@@ -220,7 +235,7 @@ if __name__=='__main__':
                 perm_rates=[1/2,1/2,0,0,0,0]  
             elif code_name=='random_rot_XZ_YZ0':    
                 codes_and_size = [RotatedPlanarCode(*(size,size)) for size in rotsizes]
-                decoder = _rotatedplanarmpsdecoder_def.RotatedPlanarMPSDecoder_def(chi=chi_val)
+                decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
                 layout='rotated'
                 bias_str='Z'
                 num_realiz=30
