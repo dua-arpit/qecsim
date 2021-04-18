@@ -379,7 +379,7 @@ def _run_defp(mode,code,time_steps,error_model,decoder,error_probability,perm_ra
     #print(max_coset_p_list.mean())
     runs_data['logical_failure_rate_samples_errorbar'] = success_list.std()/np.sqrt(max_runs)
     runs_data['logical_failure_rate_errorbar']         = max_coset_p_list.std()/np.sqrt(max_runs)
-    runs_data['logical_failure_rate']                  = max_coset_p_list.mean()
+    runs_data['logical_failure_rate']                  = 1 - max_coset_p_list.mean()
     #print(runs_data['logical_failure_rate']) 
     # error weight statistics
     runs_data['error_weight_total'] = sum(error_weights)
@@ -475,7 +475,7 @@ def _add_rate_statistics(runs_data):
     error_weight_total = runs_data['error_weight_total']
     code_n_qubits = runs_data['n_k_d'][0]
     # add rate statistics
-    runs_data['logical_failure_rate'] = n_fail / n_run
+    runs_data['logical_failure_rate_samples'] = n_fail / n_run
     runs_data['physical_error_rate'] = error_weight_total / code_n_qubits / time_steps / n_run
 
 
