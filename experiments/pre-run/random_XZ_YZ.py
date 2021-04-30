@@ -21,47 +21,31 @@ from functools import partial
 
 import pickle
 
-
-def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability):
-    result_onep= app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
-    return result_onep
-
-def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):
-    p=mp.Pool()
-    func=partial(parallel_step_p,code,error_model,decoder,max_runs,perm_rates,code_name,layout)
-    result=p.map(func,error_probabilities)
-    p.close()
-    p.join()
-    return result
-
-def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities,realization_index):
-    result_one_realiz=[]
-    for error_probability_index,error_probability in enumerate(error_probabilities):
-        result_one_realiz.append(app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs))
-    return result_one_realiz
-
-def TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):   
-    p=mp.Pool()
-    func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities)
-    result=p.map(func,range(num_realiz))
-    p.close()
-    p.join()
-    return result
+#def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities,realization_index):
+#    result_one_realiz=[]
+#    for error_probability_index,error_probability in enumerate(error_probabilities):
+#        result_one_realiz.append(app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs))
+#    return result_one_realiz
+#
+#def TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):   
+#    p=mp.Pool()
+#    func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probabilities)
+#    result=p.map(func,range(num_realiz))
+#    p.close()
+#    p.join()
+#    return result
 
 
 
-
-
-
-def parallel_step_code2(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability,realization_index):
+def parallel_step_code(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability,realization_index):
     result_one_realiz=app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
     return result_one_realiz
 
-def TNDresult_random2(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):  
+def TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):  
     result=[]
     for error_probability_index,error_probability in enumerate(error_probabilities): 
         p=mp.Pool()
-        func=partial(parallel_step_code2,code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability)
+        func=partial(parallel_step_code,code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability)
         result.append(p.map(func,range(num_realiz)))
         p.close()
         p.join()
@@ -74,7 +58,8 @@ if __name__=='__main__':
     chi_val  = int(sys.argv[2])
     bias     = int(sys.argv[3])
     max_runs = int(sys.argv[4])
-    
+    num_realiz= int(sys.argv[5])
+
     def square(a):
         return a**2
     vsquare=np.vectorize(square)
@@ -92,7 +77,6 @@ if __name__=='__main__':
     decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
     layout='rotated'
     bias_str='Z'
-    num_realiz=50
             
     error_model = BiasedDepolarizingErrorModel(bias,bias_str)
     # print run parameters
@@ -104,7 +88,9 @@ if __name__=='__main__':
     print('Maximum runs:',max_runs)
     
     results = TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
-    
+    print(len(results))
+    print(len(results[0]))
+    print(results)
     output = {}
     output["code"] = code_name
     output["error_probabilities"] = error_probabilities
@@ -115,9 +101,9 @@ if __name__=='__main__':
     output["nrod"] = num_realiz
     output["bias_str"] = bias_str
     output["L"] =code_size 
-    output["success_list"]  = [results[k]["success_list"] for k in range(len(results))]
-    output["coset_ps_list"] = [results[k]["coset_ps_list"] for k in range(len(results))] 
-    output["logical_commutations_list"] = [results[k]["logical_commutations_list"] for k in range(len(results))] 
+    output["success_list"]  =             [[results[k][j]["success_list"] for j in range(len(results[k]))] for k in range(len(results))]
+    output["coset_ps_list"] =             [[results[k][j]["coset_ps_list"] for j in range(len(results[k]))] for k in range(len(results))]
+    output["logical_commutations_list"] = [[results[k][j]["logical_commutations_list"] for j in range(len(results[k]))] for k in range(len(results))]
     
     outputpath  = "data/" + code_name + "_L"+str(code_size) + "_bias" + str(bias)
     outputpath += "_M" + str(max_runs) + "_chi" + str(chi_val) + ".pickle"
