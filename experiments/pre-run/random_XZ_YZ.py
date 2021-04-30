@@ -88,9 +88,7 @@ if __name__=='__main__':
     print('Maximum runs:',max_runs)
     
     results = TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
-    print(len(results))
-    print(len(results[0]))
-    print(results)
+    
     output = {}
     output["code"] = code_name
     output["error_probabilities"] = error_probabilities
