@@ -50,7 +50,7 @@ def TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabil
 
 
 
-    
+
 
 
 def parallel_step_code2(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability,realization_index):
@@ -103,7 +103,7 @@ if __name__=='__main__':
     print('Error probabilities:',error_probabilities)
     print('Maximum runs:',max_runs)
     
-    results = TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
+    results = TNDresult_random(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz)
     
     output = {}
     output["code"] = code_name
