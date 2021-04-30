@@ -56,15 +56,17 @@ def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,c
 
 if __name__=='__main__':
 
-    chi_val  = int(sys.argv[1])
-    max_runs = int(sys.argv[2])
+    # chi_val  = int(sys.argv[1])
+    # max_runs = int(sys.argv[2])
+    chi_val=12
+    max_runs=1000
     
     def square(a):
         return a**2
     vsquare=np.vectorize(square)
     bdry_name='surface'
     code_name = "rotXY"
-    rotsizes= [5,7,9]#13,17,21]
+    rotsizes= [13,17]
     p_min,p_max = 0.05,0.50
     error_probabilities=np.linspace(p_min,p_max,50)
 
