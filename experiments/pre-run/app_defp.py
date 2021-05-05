@@ -114,7 +114,7 @@ def deform_matsvecs(code,decoder,error_model,perm_rates,code_name,layout):
             for row,col in np.ndindex(nrows,ncols):
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
 
-        elif code_name=='rotXZ' or code_name=='rotXY':
+        elif code_name=='rot_XZ' or code_name=='rot_XY':
             for row,col in np.ndindex(nrows,ncols):
                 perm_mat[col,row]=0
                 perm_vec[(row+col*ncols)]=perm_mat[row,col]
