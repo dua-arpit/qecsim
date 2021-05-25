@@ -45,7 +45,7 @@ if __name__=='__main__':
         return a**2
     vsquare=np.vectorize(square)
     bdry_name='surface'
-    code_name = "rot_XY"
+    code_name = 'rot_XY'
 
     p_min,p_max = 0.05,0.50
     error_probabilities=np.linspace(p_min,p_max,50)
