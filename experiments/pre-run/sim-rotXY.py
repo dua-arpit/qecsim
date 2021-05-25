@@ -23,8 +23,8 @@ import pickle
 
 
 def parallel_step_p(code,error_model,decoder,max_runs,perm_rates,code_name,layout,error_probability):
-    result= app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
-    return result
+    result_onep= app_defp.run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,layout,max_runs)
+    return result_onep
 
 def TNDresult(code,decoder,error_model,max_runs,perm_rates,error_probabilities,code_name,layout,num_realiz):
     p=mp.Pool()
