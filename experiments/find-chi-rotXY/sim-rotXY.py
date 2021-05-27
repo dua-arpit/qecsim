@@ -93,7 +93,7 @@ if __name__=='__main__':
     code = RotatedPlanarCode(*(code_size,code_size))
     decoder = _rotatedplanarmpsdecoder_defp.RotatedPlanarMPSDecoder_defp(chi=chi_val)
     layout='rotated'
-    bias_str='Z'
+    bias_str='Y'
             
     error_model = BiasedDepolarizingErrorModel(bias,bias_str)
     # print run parameters
@@ -116,9 +116,9 @@ if __name__=='__main__':
     output['nrod'] = num_realiz
     output['bias_str'] = bias_str
     output['L'] =code_size 
-    output["success_list"]  =             [[results[k][j]["success_list"] for j in range(len(results[k]))] for k in range(len(results))]
-    output["coset_ps_list"] =             [[results[k][j]["coset_ps_list"] for j in range(len(results[k]))] for k in range(len(results))]
-    output["logical_commutations_list"] = [[results[k][j]["logical_commutations_list"] for j in range(len(results[k]))] for k in range(len(results))]
+    output["success_list"]  =             [results[k]["success_list"] for k in range(len(results))]
+    output["coset_ps_list"] =             [results[k]["coset_ps_list"] for k in range(len(results))]
+    output["logical_commutations_list"] = [results[k]["logical_commutations_list"] for k in range(len(results))]
     
     outputpath  = 'data/' + code_name + '_L'+str(code_size) + '_bias' + str(bias)
     outputpath += '_M' + str(max_runs) + '_chi' + str(chi_val)
