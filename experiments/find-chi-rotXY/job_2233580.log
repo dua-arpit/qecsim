@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "sim-rotXY.py", line 4, in <module>
+    from qecsim import paulitools as pt
+ImportError: No module named qecsim

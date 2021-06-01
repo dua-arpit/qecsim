@@ -388,7 +388,6 @@ def _run_defp(mode,code,time_steps,error_model,decoder,error_probability,perm_ra
     runs_data['success_list']                  = success_list
     runs_data['coset_ps_list']                 = coset_ps_list 
     runs_data['logical_commutations_list']     = logical_commutations_list 
-
     return runs_data 
 
 
@@ -452,7 +451,6 @@ def run_defp(code,error_model,decoder,error_probability,perm_rates,code_name,lay
     # validate parameters
     if not (0 <= error_probability <= 1):
         raise ValueError('Error probability must be in [0,1].')
-    
     return _run_defp('ideal',code,1,error_model,decoder,error_probability,perm_rates,code_name,layout,0.0,max_runs,max_failures,random_seed)
 
 

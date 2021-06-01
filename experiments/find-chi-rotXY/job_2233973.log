@@ -1,0 +1,6 @@
+code: Rotated planar 17x17
+Error model: Biased-depolarizing (bias=100.0, axis='Y')
+number of realizations: 1
+Decoder: Rotated planar MPS (chi=20,mode=c)
+Error probabilities: [0.19]
+Maximum runs: 3000
