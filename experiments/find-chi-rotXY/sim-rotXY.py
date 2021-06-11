@@ -123,7 +123,7 @@ if __name__=='__main__':
     outputpath  = 'data/' + code_name + '_L'+str(code_size) + '_bias' + str(bias)
     outputpath += '_M' + str(max_runs) + '_chi' + str(chi_val)
     if run_id > 0:
-        outputpath += "_n" + str(run_id)
+        outputpath += "_n" + str(run_id)+str(err_prob)
     outputpath += '.pickle'
     fout = open(outputpath, 'wb')
     pickle.dump(output, fout, pickle.HIGHEST_PROTOCOL)
